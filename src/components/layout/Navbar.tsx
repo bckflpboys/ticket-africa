@@ -11,7 +11,7 @@ const Navbar = () => {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="navbar bg-base-100 border-b border-base-200 sticky top-0 z-50">
+    <nav className="navbar bg-transparent backdrop-blur-sm border-b border-base-200/10 sticky top-0 z-50">
       <div className="container mx-auto">
         <div className="flex-1 flex justify-center gap-8 items-center">
           <Link href="/" className="text-xl font-bold text-primary">
@@ -80,7 +80,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu Dropdown */}
-        <div className={`md:hidden absolute top-full left-0 right-0 bg-base-100 border-b border-base-200 transition-all duration-300 ${
+        <div className={`md:hidden absolute top-full left-0 right-0 bg-transparent backdrop-blur-sm border-b border-base-200/10 transition-all duration-300 ${
           isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}>
           <div className="container mx-auto py-8">
