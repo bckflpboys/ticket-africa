@@ -1,71 +1,118 @@
 # Ticket Africa
 
-A modern ticket booking platform for events across Africa.
+A modern and robust ticket booking platform designed for events across Africa. Built with Next.js 15+ and modern web technologies, this platform provides a seamless experience for event discovery, ticket booking, and event management.
 
-## Features
+## Core Features
 
-- Event browsing and searching
-- Featured events showcase
-- Secure ticket booking
-- User authentication
-- Event management
+- **Event Discovery**
+  - Browse and search events
+  - Featured events showcase
+  - Event categories and filtering
+  - Detailed event pages with rich information
+
+- **Ticket Management**
+  - Secure ticket booking via Paystack
+  - Digital ticket generation
+  - Ticket validation system
+  - Booking history
+
+- **User Features**
+  - Authentication with NextAuth.js
+  - User profiles and preferences
+  - Booking history tracking
+  - Saved events
+
+- **Event Management**
+  - Event creation and editing
+  - Ticket inventory management
+  - Event analytics and reporting
+  - Real-time updates using Socket.IO
 
 ## Tech Stack
 
-- Next.js 13+
-- TypeScript
-- Tailwind CSS
-- React
+- **Frontend**
+  - Next.js 15+
+  - React 19
+  - TypeScript
+  - Tailwind CSS with DaisyUI
+  - Framer Motion for animations
+
+- **Backend**
+  - Next.js API Routes
+  - MongoDB with Mongoose
+  - Socket.IO for real-time features
+
+- **Authentication & Payments**
+  - NextAuth.js
+  - Paystack Payment Gateway
+  - JWT for API authentication
+
+- **Cloud Services**
+  - Cloudinary for media storage
+  - MongoDB Atlas for database
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 16.8 or later
-- npm or yarn
+- MongoDB instance
+- Paystack account for payments
+- Cloudinary account for media storage
+
+### Environment Setup
+
+Create a `.env.local` file with the following variables:
+```env
+MONGODB_URI=your_mongodb_connection_string
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+PAYSTACK_SECRET_KEY=your_paystack_secret_key
+CLOUDINARY_URL=your_cloudinary_url
+```
 
 ### Installation
 
 1. Clone the repository
 ```bash
-git clone [your-repo-url]
+git clone [repository-url]
+cd ticket-africa
 ```
 
 2. Install dependencies
 ```bash
 npm install
-# or
-yarn install
 ```
 
 3. Run the development server
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Development
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run test` - Run tests (when implemented)
+The application will be available at [http://localhost:3000](http://localhost:3000)
 
 ## Project Structure
 
 ```
 ├── src/
-│   ├── app/          # App router pages
-│   ├── components/   # Reusable components
-│   ├── lib/          # Utilities and helpers
-│   └── styles/       # Global styles
-├── public/           # Static files
-└── ...config files
+│   ├── app/          # Next.js 13+ App Router pages and layouts
+│   │   ├── events/   # Event-related pages
+│   │   ├── blog/     # Blog section
+│   │   └── about/    # About pages
+│   ├── components/   # Reusable React components
+│   │   └── layout/   # Layout components like Navbar
+│   ├── lib/          # Utility functions and configurations
+│   └── models/       # MongoDB/Mongoose models
+├── public/           # Static assets
+└── config files      # Various configuration files
 ```
+
+## Development Commands
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
 
 ## Contributing
 
