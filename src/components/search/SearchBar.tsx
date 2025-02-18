@@ -1,14 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-interface SearchFilters {
+export interface SearchFilters {
+  searchTerm: string;
   city: string;
   country: string;
   category: string;
   date: string;
   priceRange: string;
+}
+
+interface SearchBarProps {
+  onSearch?: (filters: SearchFilters) => void;
+  initialFilters?: Partial<SearchFilters>;
 }
 
 const categories = [
@@ -50,16 +56,17 @@ const priceRanges = [
   '₦50,000+'
 ];
 
-const SearchBar = () => {
+const SearchBar = ({ onSearch, initialFilters = {} }: SearchBarProps) => {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialFilters.searchTerm || '');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
-    city: 'All Cities',
-    country: 'All Countries',
-    category: 'All Categories',
-    date: '',
-    priceRange: 'Any Price'
+    searchTerm: initialFilters.searchTerm || '',
+    city: initialFilters.city || 'All Cities',
+    country: initialFilters.country || 'All Countries',
+    category: initialFilters.category || 'All Categories',
+    date: initialFilters.date || '',
+    priceRange: initialFilters.priceRange || 'Any Price'
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -73,7 +80,16 @@ const SearchBar = () => {
     if (filters.date) queryParams.append('date', filters.date);
     if (filters.priceRange !== 'Any Price') queryParams.append('price', filters.priceRange);
 
+    // Update URL
     router.push(`/events?${queryParams.toString()}`);
+
+    // Call onSearch callback if provided
+    if (onSearch) {
+      onSearch({
+        ...filters,
+        searchTerm
+      });
+    }
   };
 
   const handleCountryChange = (country: string) => {
