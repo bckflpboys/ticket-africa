@@ -37,8 +37,8 @@ const BlogCard = ({
           alt={title}
           fill
           className="object-cover"
-          priority
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          loading="lazy"
         />
         <div className="absolute top-4 right-4 badge badge-primary">{category}</div>
       </figure>

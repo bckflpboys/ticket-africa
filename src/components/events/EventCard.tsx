@@ -20,9 +20,9 @@ const EventCard = ({ id, title, date, location, price, imageUrl, category }: Eve
           src={imageUrl}
           alt={title}
           fill
-          priority
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover"
+          loading="lazy"
         />
         <div className="absolute top-4 right-4 badge badge-primary">{category}</div>
       </figure>
