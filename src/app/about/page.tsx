@@ -68,6 +68,7 @@ export default function AboutPage() {
                   src="https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800&auto=format&fit=crop&q=60"
                   alt="Event crowd"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
                 />
               </div>
@@ -102,6 +103,7 @@ export default function AboutPage() {
                         src={member.image}
                         alt={member.name}
                         fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover"
                       />
                     </div>
