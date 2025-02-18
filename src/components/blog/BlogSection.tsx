@@ -21,7 +21,7 @@ const mockPosts = [
     id: '2',
     title: 'The Rise of Tech Conferences in West Africa',
     excerpt: 'How West Africa is becoming a major hub for technology conferences and what this means for the region\'s tech ecosystem.',
-    coverImage: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&auto=format&fit=crop&q=60',
+    coverImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=60',
     author: {
       name: 'David Okonkwo',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&auto=format&fit=crop&q=60'
@@ -34,7 +34,7 @@ const mockPosts = [
     id: '3',
     title: 'Cultural Festivals: Preserving African Heritage',
     excerpt: 'An in-depth look at how cultural festivals are playing a crucial role in preserving and celebrating African heritage.',
-    coverImage: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800&auto=format&fit=crop&q=60',
+    coverImage: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=60',
     author: {
       name: 'Amara Kente',
       avatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=800&auto=format&fit=crop&q=60'
