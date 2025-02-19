@@ -2,74 +2,97 @@
 
 A modern and robust ticket booking platform designed for events across Africa. Built with Next.js 15+ and modern web technologies, this platform provides a seamless experience for event discovery, ticket booking, and event management.
 
-## Core Features
+## Current Features
 
-- **Event Discovery**
-  - Browse and search events
-  - Featured events showcase
-  - Event categories and filtering
-  - Detailed event pages with rich information
+### Event Discovery & Browsing
+- Browse events with detailed event pages
+- Advanced search functionality with filters for:
+  - Categories (Music, Technology, Business, etc.)
+  - Location (Countries and Cities across Africa)
+  - Date
+  - Price Range
+  - Tags
+- Featured events showcase on homepage
+- Event image galleries with smooth navigation
+- Event details including descriptions, schedules, and locations
 
-- **Ticket Management**
-  - Secure ticket booking via Paystack
-  - Digital ticket generation
-  - Ticket validation system
-  - Booking history
+### Ticket Management
+- Multiple ticket types (Regular, VIP, VVIP)
+- Optional Cooler Box Pass for events
+- Shopping cart functionality with:
+  - Individual ticket type tracking
+  - Quantity management
+  - Price calculations
+  - Service fee (5%) calculation
+  - Cart persistence
 
-- **User Features**
-  - Authentication with NextAuth.js
-  - User profiles and preferences
-  - Booking history tracking
-  - Saved events
+### User Interface
+- Responsive design for all screen sizes
+- Modern UI with DaisyUI components
+- Smooth animations and transitions
+- Intuitive navigation
+- Search bar with advanced filtering
+- Mobile-friendly navigation menu
 
-- **Event Management**
-  - Event creation and editing
-  - Ticket inventory management
-  - Event analytics and reporting
-  - Real-time updates using Socket.IO
+## Planned Features
+
+### Authentication & User Management
+- User registration and login
+- Social media authentication
+- User profiles and preferences
+- Booking history tracking
+- Saved events functionality
+
+### Payment Integration
+- Secure payment processing
+- Multiple payment methods
+- Transaction history
+- Refund management
+
+### Event Management
+- Event creation for organizers
+- Ticket inventory management
+- Event analytics and reporting
+- Real-time updates
 
 ## Tech Stack
 
-- **Frontend**
-  - Next.js 15+
-  - React 19
-  - TypeScript
-  - Tailwind CSS with DaisyUI
-  - Framer Motion for animations
+### Frontend
+- Next.js 15+
+- React 19
+- TypeScript
+- Tailwind CSS with DaisyUI
+- Context API for state management
 
-- **Backend**
-  - Next.js API Routes
-  - MongoDB with Mongoose
-  - Socket.IO for real-time features
+### Development Tools
+- ESLint for code quality
+- Prettier for code formatting
+- Git for version control
 
-- **Authentication & Payments**
-  - NextAuth.js
-  - Paystack Payment Gateway
-  - JWT for API authentication
-
-- **Cloud Services**
-  - Cloudinary for media storage
-  - MongoDB Atlas for database
+## Project Structure
+```
+src/
+├── app/                    # Next.js 13+ App Router pages
+│   ├── events/            # Event-related pages
+│   ├── blog/             # Blog section
+│   └── contact/          # Contact pages
+├── components/            # React components
+│   ├── layout/           # Layout components (Navbar, Footer)
+│   ├── events/           # Event-related components
+│   ├── search/           # Search components
+│   ├── home/             # Homepage components
+│   └── blog/             # Blog components
+├── contexts/             # React Context providers
+│   └── cart.tsx         # Shopping cart context
+├── lib/                  # Utility functions
+└── models/              # Data models
+```
 
 ## Getting Started
 
 ### Prerequisites
-
 - Node.js 16.8 or later
-- MongoDB instance
-- Paystack account for payments
-- Cloudinary account for media storage
-
-### Environment Setup
-
-Create a `.env.local` file with the following variables:
-```env
-MONGODB_URI=your_mongodb_connection_string
-NEXTAUTH_SECRET=your_nextauth_secret
-NEXTAUTH_URL=http://localhost:3000
-PAYSTACK_SECRET_KEY=your_paystack_secret_key
-CLOUDINARY_URL=your_cloudinary_url
-```
+- npm or yarn package manager
 
 ### Installation
 
@@ -91,31 +114,13 @@ npm run dev
 
 The application will be available at [http://localhost:3000](http://localhost:3000)
 
-## Project Structure
-
-```
-├── src/
-│   ├── app/          # Next.js 13+ App Router pages and layouts
-│   │   ├── events/   # Event-related pages
-│   │   ├── blog/     # Blog section
-│   │   └── about/    # About pages
-│   ├── components/   # Reusable React components
-│   │   └── layout/   # Layout components like Navbar
-│   ├── lib/          # Utility functions and configurations
-│   └── models/       # MongoDB/Mongoose models
-├── public/           # Static assets
-└── config files      # Various configuration files
-```
-
 ## Development Commands
-
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 
 ## Contributing
-
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
@@ -123,5 +128,4 @@ The application will be available at [http://localhost:3000](http://localhost:30
 5. Open a Pull Request
 
 ## License
-
 This project is licensed under the MIT License - see the LICENSE file for details
