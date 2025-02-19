@@ -8,7 +8,7 @@ import { useCart } from '@/contexts/cart';
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { getCartCount, getCartTotal } = useCart();
+  const { getCartCount, getCartTotal, cartItems, removeFromCart } = useCart();
 
   const isActive = (path: string) => pathname === path;
 
@@ -103,20 +103,92 @@ const Navbar = () => {
               <span className="badge badge-sm indicator-item">{getCartCount()}</span>
             </div>
           </div>
-          <div tabIndex={0} className="dropdown-content z-[999] card card-compact w-52 p-2 shadow bg-base-100 mt-2 border border-base-300 rounded-box">
+          <div tabIndex={0} className="dropdown-content z-[999] card card-compact w-80 p-2 shadow bg-base-100 mt-2 border border-base-300 rounded-box">
             <div className="card-body">
-              <div className="flex flex-col gap-1 border-b border-base-200 pb-2 mb-2">
-                <span className="text-sm font-semibold">Shopping Cart</span>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-base-content/70">{getCartCount()} Items</span>
-                  <span className="text-xs font-medium">₦{getCartTotal().toLocaleString()}</span>
-                </div>
+              <div className="flex justify-between items-center border-b border-base-200 pb-2 mb-2">
+                <span className="text-lg font-semibold">Shopping Cart</span>
+                <span className="text-sm text-base-content/70">{getCartCount()} Items</span>
               </div>
-              <div className="card-actions">
-                <Link href="/cart" className="btn btn-primary btn-block btn-sm">
-                  View Cart
-                </Link>
+
+              {/* Cart Items */}
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                {cartItems.map((item) => (
+                  <div key={item.eventId} className="flex flex-col gap-2 py-2 border-b border-base-200">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium">{item.eventName || 'Event'}</h3>
+                      <button 
+                        onClick={() => removeFromCart(item.eventId)}
+                        className="btn btn-ghost btn-sm btn-square"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {/* Tickets */}
+                    <div className="space-y-1 text-sm">
+                      {item.tickets.regular > 0 && (
+                        <div className="flex justify-between">
+                          <span>Regular Ticket × {item.tickets.regular}</span>
+                          <span>₦{(item.tickets.regular * 5000).toLocaleString()}</span>
+                        </div>
+                      )}
+                      {item.tickets.vip > 0 && (
+                        <div className="flex justify-between">
+                          <span>VIP Ticket × {item.tickets.vip}</span>
+                          <span>₦{(item.tickets.vip * 15000).toLocaleString()}</span>
+                        </div>
+                      )}
+                      {item.tickets.vvip > 0 && (
+                        <div className="flex justify-between">
+                          <span>VVIP Ticket × {item.tickets.vvip}</span>
+                          <span>₦{(item.tickets.vvip * 30000).toLocaleString()}</span>
+                        </div>
+                      )}
+                      {item.coolerBoxPass && (
+                        <div className="flex justify-between">
+                          <span>Cooler Box Pass</span>
+                          <span>₦2,000</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {cartItems.length === 0 && (
+                  <div className="text-center py-8 text-base-content/70">
+                    Your cart is empty
+                  </div>
+                )}
               </div>
+
+              {cartItems.length > 0 && (
+                <>
+                  {/* Cart Summary */}
+                  <div className="border-t border-base-200 pt-4 mt-2 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal</span>
+                      <span>₦{getCartTotal().toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Service Fee (5%)</span>
+                      <span>₦{(getCartTotal() * 0.05).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-medium pt-2 border-t border-base-200">
+                      <span>Total</span>
+                      <span>₦{(getCartTotal() * 1.05).toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="card-actions mt-4">
+                    <Link href="/cart" className="btn btn-primary btn-block">
+                      Checkout
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

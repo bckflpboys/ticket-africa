@@ -44,6 +44,11 @@ export default function EventDetails() {
   };
 
   const toggleCoolerBoxPass = () => {
+    const hasTickets = Object.values(tickets).some(quantity => quantity > 0);
+    if (!hasTickets && !coolerBoxPass) {
+      window.alert('Please select at least one ticket before adding a Cooler Box Pass.');
+      return;
+    }
     setCoolerBoxPass(prev => !prev);
   };
 
@@ -61,8 +66,18 @@ export default function EventDetails() {
   };
 
   const handleAddToCart = () => {
+    // Check if at least one ticket is selected
+    const hasTickets = Object.values(tickets).some(quantity => quantity > 0);
+    
+    if (!hasTickets && coolerBoxPass) {
+      window.alert('You cannot add a Cooler Box Pass without selecting at least one ticket.');
+      setCoolerBoxPass(false);
+      return;
+    }
+
     const cartItem = {
       eventId: id as string,
+      eventName: "Summer Music Festival",
       tickets,
       coolerBoxPass,
       subtotal: calculateSubtotal(),
@@ -70,8 +85,6 @@ export default function EventDetails() {
     };
     
     addToCart(cartItem);
-    
-    // Show success message using toast or alert
     window.alert('Added to cart successfully!');
   };
 

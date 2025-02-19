@@ -10,6 +10,7 @@ type Tickets = {
 
 type CartItem = {
   eventId: string;
+  eventName: string;
   tickets: Tickets;
   coolerBoxPass: boolean;
   subtotal: number;
@@ -57,7 +58,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const getCartCount = () => {
     return cartItems.reduce((count, item) => {
-      return count + item.tickets.regular + item.tickets.vip + item.tickets.vvip;
+      return count + item.tickets.regular + item.tickets.vip + item.tickets.vvip + (item.coolerBoxPass ? 1 : 0);
     }, 0);
   };
 
