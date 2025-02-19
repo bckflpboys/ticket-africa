@@ -37,21 +37,18 @@ const Navbar = () => {
                   Blog
                 </Link>
               </li>
-              <li>
-                <Link 
-                  href="/about"
-                  className={isActive('/about') ? 'active' : ''}
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/contact"
-                  className={isActive('/contact') ? 'active' : ''}
-                >
+              <li className="dropdown dropdown-hover">
+                <div tabIndex={0} role="button" className={`${isActive('/contact') || isActive('/about') ? 'active' : ''}`}>
                   Contact
-                </Link>
+                </div>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                  <li>
+                    <Link href="/contact">Contact Us</Link>
+                  </li>
+                  <li>
+                    <Link href="/about">About Us</Link>
+                  </li>
+                </ul>
               </li>
             </ul>
           </div>
@@ -103,23 +100,18 @@ const Navbar = () => {
                   Blog
                 </Link>
               </li>
-              <li>
-                <Link 
-                  href="/about"
-                  className={`text-lg ${isActive('/about') ? 'text-primary font-semibold' : ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/contact"
-                  className={`text-lg ${isActive('/contact') ? 'text-primary font-semibold' : ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
+              <li className="dropdown dropdown-hover">
+                <div tabIndex={0} role="button" className={`text-lg ${isActive('/contact') || isActive('/about') ? 'text-primary font-semibold' : ''}`}>
                   Contact
-                </Link>
+                </div>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                  <li>
+                    <Link href="/contact" onClick={() => setIsMenuOpen(false)}>Contact Us</Link>
+                  </li>
+                  <li>
+                    <Link href="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
+                  </li>
+                </ul>
               </li>
             </ul>
           </div>

@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export interface SearchFilters {
   searchTerm: string;
-  city: string;
-  country: string;
   category: string;
+  country: string;
+  city: string;
   date: string;
   priceRange: string;
+  tags?: string[];
 }
 
 interface SearchBarProps {
@@ -56,17 +57,39 @@ const priceRanges = [
   '₦50,000+'
 ];
 
+const popularTags = [
+  'Music',
+  'Technology',
+  'Business',
+  'Sports',
+  'Arts & Theatre',
+  'Food & Drink',
+  'Community',
+  'Concert',
+  'Seminar',
+  'Workshop',
+  'Conference',
+  'Meetup',
+  'Gala',
+  'Festival',
+  'Fair',
+  'Exhibition'
+];
+
 const SearchBar = ({ onSearch, initialFilters = {} }: SearchBarProps) => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState(initialFilters.searchTerm || '');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({
     searchTerm: initialFilters.searchTerm || '',
-    city: initialFilters.city || 'All Cities',
-    country: initialFilters.country || 'All Countries',
     category: initialFilters.category || 'All Categories',
+    country: initialFilters.country || 'All Countries',
+    city: initialFilters.city || 'All Cities',
     date: initialFilters.date || '',
-    priceRange: initialFilters.priceRange || 'Any Price'
+    priceRange: initialFilters.priceRange || 'Any Price',
+    tags: initialFilters.tags
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -79,6 +102,7 @@ const SearchBar = ({ onSearch, initialFilters = {} }: SearchBarProps) => {
     if (filters.city !== 'All Cities') queryParams.append('city', filters.city);
     if (filters.date) queryParams.append('date', filters.date);
     if (filters.priceRange !== 'Any Price') queryParams.append('price', filters.priceRange);
+    filters.tags?.forEach(tag => queryParams.append('tags', tag));
 
     // Update URL
     router.push(`/events?${queryParams.toString()}`);
@@ -92,119 +116,205 @@ const SearchBar = ({ onSearch, initialFilters = {} }: SearchBarProps) => {
     }
   };
 
-  const handleCountryChange = (country: string) => {
+  const handleTagInput = (input: string) => {
+    setTagInput(input);
+    if (input.length >= 2) {
+      // Filter popular tags based on input
+      const suggestions = popularTags.filter(tag =>
+        tag.toLowerCase().includes(input.toLowerCase())
+      );
+      setSuggestedTags(suggestions);
+    } else {
+      setSuggestedTags([]);
+    }
+  };
+
+  const addTag = (tag: string) => {
+    if (!filters.tags?.includes(tag)) {
+      setFilters(prev => ({
+        ...prev,
+        tags: [...(prev.tags || []), tag],
+      }));
+    }
+    setTagInput('');
+    setSuggestedTags([]);
+  };
+
+  const removeTag = (tag: string) => {
     setFilters(prev => ({
       ...prev,
-      country,
-      city: 'All Cities' // Reset city when country changes
+      tags: prev.tags?.filter(t => t !== tag) || [],
     }));
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4">
-      <form onSubmit={handleSearch} className="space-y-4">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search for events..."
-              className="input input-bordered w-full pl-10"
-            />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowFilters(!showFilters)}
-            className="btn btn-circle btn-ghost"
+    <div className="w-full max-w-4xl mx-auto space-y-4">
+      <div className="flex gap-4">
+        <input
+          type="text"
+          placeholder="Search events..."
+          className="input input-bordered flex-1"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button
+          className="btn btn-primary"
+          onClick={handleSearch}
+        >
+          Search
+        </button>
+      </div>
+
+      <button
+        className="btn btn-ghost btn-sm"
+        onClick={() => setShowAdvanced(!showAdvanced)}
+      >
+        {showAdvanced ? 'Hide' : 'Show'} Filters
+      </button>
+
+      {showAdvanced && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <select
+            className="select select-bordered w-full"
+            value={filters.category}
+            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+            <option>All Categories</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="select select-bordered w-full"
+            value={filters.country}
+            onChange={(e) => setFilters({ ...filters, country: e.target.value })}
+          >
+            <option>All Countries</option>
+            {countries.map((country) => (
+              <option key={country} value={country}>
+                {country}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="select select-bordered w-full"
+            value={filters.city}
+            onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+          >
+            <option>All Cities</option>
+            {cities[filters.country as keyof typeof cities]?.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            )) || cities.Nigeria.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="date"
+            className="input input-bordered w-full"
+            value={filters.date}
+            onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+          />
+
+          <select
+            className="select select-bordered w-full"
+            value={filters.priceRange}
+            onChange={(e) => setFilters({ ...filters, priceRange: e.target.value })}
+          >
+            <option>Any Price</option>
+            {priceRanges.map((range) => (
+              <option key={range} value={range}>
+                {range}
+              </option>
+            ))}
+          </select>
+
+          {/* Tags Section */}
+          <div className="col-span-full space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Add tags..."
+                className="input input-bordered flex-1"
+                value={tagInput}
+                onChange={(e) => handleTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && tagInput) {
+                    addTag(tagInput);
+                  }
+                }}
               />
-            </svg>
-          </button>
-          <button type="submit" className="btn btn-primary">
-            Search
-          </button>
-        </div>
+              {tagInput && (
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => addTag(tagInput)}
+                >
+                  Add
+                </button>
+              )}
+            </div>
 
-        {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4 bg-base-200 rounded-lg">
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-              className="select select-bordered w-full"
-            >
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
+            {/* Tag Suggestions */}
+            {suggestedTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-2 bg-base-200 rounded-lg">
+                {suggestedTags.map((tag) => (
+                  <button
+                    key={tag}
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => addTag(tag)}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            <select
-              value={filters.country}
-              onChange={(e) => handleCountryChange(e.target.value)}
-              className="select select-bordered w-full"
-            >
-              {countries.map(country => (
-                <option key={country} value={country}>{country}</option>
-              ))}
-            </select>
+            {/* Selected Tags */}
+            {filters.tags && filters.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {filters.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="badge badge-primary badge-lg gap-2"
+                  >
+                    {tag}
+                    <button
+                      className="btn btn-ghost btn-xs"
+                      onClick={() => removeTag(tag)}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
 
-            <select
-              value={filters.city}
-              onChange={(e) => setFilters(prev => ({ ...prev, city: e.target.value }))}
-              className="select select-bordered w-full"
-            >
-              {cities[filters.country as keyof typeof cities]?.map(city => (
-                <option key={city} value={city}>{city}</option>
-              )) || cities.Nigeria.map(city => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-            </select>
-
-            <input
-              type="date"
-              value={filters.date}
-              onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
-              className="input input-bordered w-full"
-            />
-
-            <select
-              value={filters.priceRange}
-              onChange={(e) => setFilters(prev => ({ ...prev, priceRange: e.target.value }))}
-              className="select select-bordered w-full"
-            >
-              {priceRanges.map(range => (
-                <option key={range} value={range}>{range}</option>
-              ))}
-            </select>
+            {/* Popular Tags */}
+            <div className="mt-4">
+              <p className="text-sm font-semibold mb-2">Popular Tags:</p>
+              <div className="flex flex-wrap gap-2">
+                {popularTags.slice(0, 8).map((tag) => (
+                  <button
+                    key={tag}
+                    className="btn btn-outline btn-xs"
+                    onClick={() => addTag(tag)}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        )}
-      </form>
+        </div>
+      )}
     </div>
   );
 };

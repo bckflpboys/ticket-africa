@@ -9,7 +9,21 @@ import EventCard from '@/components/events/EventCard';
 import type { Event } from '@/lib/utils/eventUtils';
 import type { SearchFilters } from '@/components/search/SearchBar';
 
-// Mock data - replace with actual API call
+// Mock categories for demonstration
+const CATEGORIES = [
+  'Technology',
+  'Music',
+  'Business',
+  'Fashion',
+  'Food & Drink',
+  'Sports',
+  'Arts',
+  'Education',
+  'Entertainment',
+  'Health'
+] as const;
+
+// Mock events data - replace with actual API call
 const mockEvents: Event[] = [
   {
     id: '1',
@@ -18,7 +32,8 @@ const mockEvents: Event[] = [
     location: 'Lagos, Nigeria',
     price: 25000,
     imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=60',
-    category: 'Technology'
+    category: 'Technology',
+    tag: 'conference, networking, innovation'
   },
   {
     id: '2',
@@ -27,7 +42,8 @@ const mockEvents: Event[] = [
     location: 'Abuja, Nigeria',
     price: 15000,
     imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=60',
-    category: 'Music'
+    category: 'Music',
+    tag: 'festival, concert, live-music'
   },
   {
     id: '3',
@@ -36,7 +52,8 @@ const mockEvents: Event[] = [
     location: 'Port Harcourt, Nigeria',
     price: 30000,
     imageUrl: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&auto=format&fit=crop&q=60',
-    category: 'Business'
+    category: 'Business',
+    tag: 'summit, networking, entrepreneurship'
   },
   {
     id: '4',
@@ -45,7 +62,8 @@ const mockEvents: Event[] = [
     location: 'Lagos, Nigeria',
     price: 20000,
     imageUrl: 'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?w=800&auto=format&fit=crop&q=60',
-    category: 'Fashion'
+    category: 'Fashion',
+    tag: 'fashion, exhibition, runway'
   },
   {
     id: '5',
@@ -54,7 +72,8 @@ const mockEvents: Event[] = [
     location: 'Abuja, Nigeria',
     price: 10000,
     imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop&q=60',
-    category: 'Food & Drink'
+    category: 'Food & Drink',
+    tag: 'festival, food, wine-tasting'
   }
 ];
 
@@ -63,7 +82,8 @@ function filterEvents(events: Event[], filters: SearchFilters): Event[] {
     const searchTermMatch = !filters.searchTerm || 
       event.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
       event.location.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      event.category.toLowerCase().includes(filters.searchTerm.toLowerCase());
+      event.category.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      event.tag.toLowerCase().includes(filters.searchTerm.toLowerCase());
 
     const categoryMatch = filters.category === 'All Categories' || 
       event.category === filters.category;
@@ -80,8 +100,13 @@ function filterEvents(events: Event[], filters: SearchFilters): Event[] {
     const priceMatch = filters.priceRange === 'Any Price' || 
       matchPriceRange(event.price, filters.priceRange);
 
+    const tagsMatch = !filters.tags?.length || 
+      filters.tags.every(tag => 
+        event.tag.toLowerCase().includes(tag.toLowerCase())
+      );
+
     return searchTermMatch && categoryMatch && locationMatch && 
-           countryMatch && dateMatch && priceMatch;
+           countryMatch && dateMatch && priceMatch && tagsMatch;
   });
 }
 
@@ -113,7 +138,8 @@ export default function EventsPage() {
     country: searchParams.get('country') || 'All Countries',
     city: searchParams.get('city') || 'All Cities',
     date: searchParams.get('date') || '',
-    priceRange: searchParams.get('price') || 'Any Price'
+    priceRange: searchParams.get('price') || 'Any Price',
+    tags: searchParams.getAll('tags') || []
   };
 
   // Handle search

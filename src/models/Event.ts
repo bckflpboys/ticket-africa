@@ -40,6 +40,27 @@ const eventSchema = new mongoose.Schema({
     enum: ['draft', 'published', 'cancelled', 'completed'],
     default: 'draft',
   },
+  category: {
+    type: String,
+    required: true,
+    enum: [
+      'Technology',
+      'Music',
+      'Business',
+      'Fashion',
+      'Food & Drink',
+      'Sports',
+      'Arts',
+      'Education',
+      'Entertainment',
+      'Health'
+    ]
+  },
+  tags: [{
+    type: String,
+    lowercase: true,
+    trim: true
+  }],
   createdAt: {
     type: Date,
     default: Date.now,
