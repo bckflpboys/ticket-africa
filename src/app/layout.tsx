@@ -1,13 +1,10 @@
-import './globals.css'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+'use client';
 
-const inter = Inter({ subsets: ['latin'] })
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { CartProvider } from '@/contexts/cart';
 
-export const metadata: Metadata = {
-  title: 'Ticket Africa',
-  description: 'Your premier destination for concert and event tickets in Africa',
-}
+const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({
   children,
@@ -17,9 +14,11 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light">
       <body className={inter.className}>
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <CartProvider>
+          <main className="min-h-screen">
+            {children}
+          </main>
+        </CartProvider>
       </body>
     </html>
   )

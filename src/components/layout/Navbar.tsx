@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useCart } from '@/contexts/cart';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { getCartCount, getCartTotal } = useCart();
 
   const isActive = (path: string) => pathname === path;
 
@@ -60,20 +62,16 @@ const Navbar = () => {
                 <div tabIndex={0} role="button" className={`${isActive('/contact') || isActive('/about') ? 'active' : ''}`}>
                   Contact
                 </div>
-                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                  <li>
-                    <Link href="/contact">Contact Us</Link>
-                  </li>
-                  <li>
-                    <Link href="/about">About Us</Link>
-                  </li>
+                <ul tabIndex={0} className="dropdown-content z-[999] menu p-2 shadow bg-base-100 rounded-box w-52 mt-1 border border-base-300">
+                  <li><Link href="/contact">Contact Us</Link></li>
+                  <li><Link href="/about">About Us</Link></li>
                 </ul>
               </li>
             </ul>
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex-none md:hidden">
+          <div className="md:hidden">
             <button
               className="btn btn-square btn-ghost"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -95,71 +93,73 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Shopping Cart */}
-        <div className="dropdown dropdown-bottom dropdown-end">
+        {/* Cart Dropdown */}
+        <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
             <div className="indicator">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <span className="badge badge-sm indicator-item">0</span>
+              <span className="badge badge-sm indicator-item">{getCartCount()}</span>
             </div>
           </div>
           <div tabIndex={0} className="dropdown-content z-[999] card card-compact w-52 p-2 shadow bg-base-100 mt-2 border border-base-300 rounded-box">
-            <div className="card-body p-2">
+            <div className="card-body">
               <div className="flex flex-col gap-1 border-b border-base-200 pb-2 mb-2">
                 <span className="text-sm font-semibold">Shopping Cart</span>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-base-content/70">0 Items</span>
-                  <span className="text-xs font-medium">Total: ₦0</span>
+                  <span className="text-xs text-base-content/70">{getCartCount()} Items</span>
+                  <span className="text-xs font-medium">₦{getCartTotal().toLocaleString()}</span>
                 </div>
               </div>
               <div className="card-actions">
-                <Link href="/cart" className="btn btn-primary btn-sm w-full">View cart</Link>
+                <Link href="/cart" className="btn btn-primary btn-block btn-sm">
+                  View Cart
+                </Link>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Menu Dropdown */}
-        <div className={`md:hidden absolute top-full left-0 right-0 bg-base-100 border-b border-base-200 transition-all duration-300 ${
-          isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}>
-          <div className="container mx-auto py-8">
-            <ul className="flex flex-col items-center gap-6">
-              <li>
-                <Link 
-                  href="/events" 
-                  className={`text-lg ${isActive('/events') ? 'text-primary font-semibold' : ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Events
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/blog"
-                  className={`text-lg ${isActive('/blog') ? 'text-primary font-semibold' : ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Blog
-                </Link>
-              </li>
-              <li className="dropdown dropdown-hover">
-                <div tabIndex={0} role="button" className={`text-lg ${isActive('/contact') || isActive('/about') ? 'text-primary font-semibold' : ''}`}>
-                  Contact
-                </div>
-                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                  <li>
-                    <Link href="/contact" onClick={() => setIsMenuOpen(false)}>Contact Us</Link>
-                  </li>
-                  <li>
-                    <Link href="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </div>
+      {/* Mobile Menu Dropdown */}
+      <div className={`md:hidden absolute top-full left-0 right-0 bg-base-100 border-b border-base-200 transition-all duration-300 ${
+        isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+      }`}>
+        <div className="container mx-auto py-8">
+          <ul className="flex flex-col items-center gap-6">
+            <li>
+              <Link 
+                href="/events" 
+                className={`text-lg ${isActive('/events') ? 'text-primary font-semibold' : ''}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Events
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/blog"
+                className={`text-lg ${isActive('/blog') ? 'text-primary font-semibold' : ''}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Blog
+              </Link>
+            </li>
+            <li className="dropdown dropdown-hover">
+              <div tabIndex={0} role="button" className={`text-lg ${isActive('/contact') || isActive('/about') ? 'text-primary font-semibold' : ''}`}>
+                Contact
+              </div>
+              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                <li>
+                  <Link href="/contact" onClick={() => setIsMenuOpen(false)}>Contact Us</Link>
+                </li>
+                <li>
+                  <Link href="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
+                </li>
+              </ul>
+            </li>
+          </ul>
         </div>
       </div>
     </nav>
