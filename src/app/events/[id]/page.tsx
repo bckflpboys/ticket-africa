@@ -149,23 +149,81 @@ export default function EventDetails() {
                   <ul className="space-y-2">
                     <li className="flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
                       <span>Live performances from top artists</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
                       <span>Food and beverage vendors</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
                       <span>Interactive activities and games</span>
                     </li>
                   </ul>
+
+                  <div className="divider"></div>
+
+                  <h3 className="text-lg font-semibold mb-4">Event Rules & Restrictions</h3>
+                  <div className="bg-base-300/50 rounded-lg p-4">
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <span className="font-medium">Age Restriction</span>
+                          <p className="text-sm text-base-content/70">No persons under 16 years of age will be admitted</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <span className="font-medium">No Weapons</span>
+                          <p className="text-sm text-base-content/70">Weapons of any kind are strictly prohibited</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <span className="font-medium">No Professional Cameras</span>
+                          <p className="text-sm text-base-content/70">Professional photography equipment is not allowed</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <span className="font-medium">No Pets</span>
+                          <p className="text-sm text-base-content/70">Pets are not allowed at the venue (service animals excepted)</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-warning" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <span className="font-medium">Cooler Boxes Allowed with Pass</span>
+                          <p className="text-sm text-base-content/70">Cooler boxes (max 50L) permitted with purchase of Cooler Box Pass</p>
+                        </div>
+                      </li>
+                    </ul>
+                    <div className="mt-4 p-3 bg-warning/10 rounded-lg">
+                      <p className="text-sm text-warning-content/80">
+                        <span className="font-medium">Note:</span> Violation of any of these rules may result in denial of entry or removal from the event without refund.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -295,6 +353,34 @@ export default function EventDetails() {
                               <option value="4">4</option>
                             </select>
                             <button className="btn btn-primary btn-sm">Add</button>
+                          </div>
+                        </div>
+
+                        {/* Cooler Box Pass */}
+                        <div className="p-3 border-2 border-accent rounded-lg space-y-3 bg-accent/5">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium">Cooler Box Pass</h4>
+                                <span className="badge badge-accent badge-sm">OPTIONAL</span>
+                              </div>
+                              <p className="text-sm text-base-content/70">Bring your own drinks and snacks (max size: 50L)</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold">₦2,000</div>
+                              <span className="text-sm text-success">Available</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <select className="select select-bordered select-sm flex-1">
+                              <option value="0">0</option>
+                              <option value="1">1</option>
+                              <option value="2">2</option>
+                            </select>
+                            <button className="btn btn-accent btn-sm">Add</button>
+                          </div>
+                          <div className="text-xs text-base-content/70 mt-1">
+                            * One pass required per cooler box. Maximum 2 per person.
                           </div>
                         </div>
 
