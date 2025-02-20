@@ -60,6 +60,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const removeTicket = (ticketId: string) => {
+    const ticketToRemove = tickets.find(t => t.id === ticketId);
+    if (!ticketToRemove) return;
+
+    // Check if this is the last ticket for this event
+    const remainingEventTickets = tickets.filter(t => 
+      t.eventId === ticketToRemove.eventId && t.id !== ticketId
+    );
+
+    // If this is the last ticket and there's a cooler box for this event
+    const hasEventCoolerBox = coolerBoxes.some(cb => cb.eventId === ticketToRemove.eventId);
+    
+    if (remainingEventTickets.length === 0 && hasEventCoolerBox) {
+      window.alert('Cannot remove the last ticket while a cooler box pass exists for this event.');
+      return;
+    }
+
     setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
   };
 
