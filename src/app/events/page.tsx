@@ -29,8 +29,8 @@ const mockEvents: Event[] = [
     id: '1',
     title: 'Tech Conference 2025',
     date: '2025-03-15',
-    location: 'Lagos, Nigeria',
-    price: 25000,
+    location: 'Cape Town, South Africa',
+    price: 450,
     imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=60',
     category: 'Technology',
     tag: 'conference, networking, innovation'
@@ -39,8 +39,8 @@ const mockEvents: Event[] = [
     id: '2',
     title: 'Afrobeats Festival',
     date: '2025-04-01',
-    location: 'Abuja, Nigeria',
-    price: 15000,
+    location: 'Johannesburg, South Africa',
+    price: 350,
     imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=60',
     category: 'Music',
     tag: 'festival, concert, live-music'
@@ -49,8 +49,8 @@ const mockEvents: Event[] = [
     id: '3',
     title: 'Business Summit',
     date: '2025-03-20',
-    location: 'Port Harcourt, Nigeria',
-    price: 30000,
+    location: 'Pretoria, South Africa',
+    price: 550,
     imageUrl: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&auto=format&fit=crop&q=60',
     category: 'Business',
     tag: 'summit, networking, entrepreneurship'
@@ -59,8 +59,8 @@ const mockEvents: Event[] = [
     id: '4',
     title: 'African Fashion Week',
     date: '2025-05-10',
-    location: 'Lagos, Nigeria',
-    price: 20000,
+    location: 'Durban, South Africa',
+    price: 250,
     imageUrl: 'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?w=800&auto=format&fit=crop&q=60',
     category: 'Fashion',
     tag: 'fashion, exhibition, runway'
@@ -69,8 +69,8 @@ const mockEvents: Event[] = [
     id: '5',
     title: 'Food & Wine Festival',
     date: '2025-06-15',
-    location: 'Abuja, Nigeria',
-    price: 10000,
+    location: 'Bloemfontein, South Africa',
+    price: 150,
     imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop&q=60',
     category: 'Food & Drink',
     tag: 'festival, food, wine-tasting'
@@ -101,8 +101,10 @@ function filterEvents(events: Event[], filters: SearchFilters): Event[] {
       matchPriceRange(event.price, filters.priceRange);
 
     const tagsMatch = !filters.tags?.length || 
-      filters.tags.every(tag => 
-        event.tag.toLowerCase().includes(tag.toLowerCase())
+      filters.tags.some(searchTag => 
+        event.tag.toLowerCase().split(',').some(eventTag => 
+          eventTag.trim().includes(searchTag.toLowerCase())
+        )
       );
 
     return searchTermMatch && categoryMatch && locationMatch && 
@@ -114,14 +116,14 @@ function matchPriceRange(price: number, range: string): boolean {
   switch (range) {
     case 'Free':
       return price === 0;
-    case '₦1 - ₦5,000':
-      return price > 0 && price <= 5000;
-    case '₦5,001 - ₦20,000':
-      return price > 5000 && price <= 20000;
-    case '₦20,001 - ₦50,000':
-      return price > 20000 && price <= 50000;
-    case '₦50,000+':
-      return price > 50000;
+    case 'R0 - R200':
+      return price > 0 && price <= 200;
+    case 'R201 - R400':
+      return price > 200 && price <= 400;
+    case 'R401 - R600':
+      return price > 400 && price <= 600;
+    case 'R600+':
+      return price > 600;
     default:
       return true;
   }

@@ -51,29 +51,26 @@ const cities = {
 const priceRanges = [
   'Any Price',
   'Free',
-  '₦1 - ₦5,000',
-  '₦5,001 - ₦20,000',
-  '₦20,001 - ₦50,000',
-  '₦50,000+'
+  'R1 - R500',
+  'R501 - R2,000',
+  'R2,001 - R5,000',
+  'R5,000+'
 ];
 
 const popularTags = [
-  'Music',
-  'Technology',
-  'Business',
-  'Sports',
-  'Arts & Theatre',
-  'Food & Drink',
-  'Community',
-  'Concert',
-  'Seminar',
-  'Workshop',
-  'Conference',
-  'Meetup',
-  'Gala',
-  'Festival',
-  'Fair',
-  'Exhibition'
+  'music',
+  'technology',
+  'conference',
+  'innovation',
+  'festival',
+  'concert',
+  'live-music',
+  'networking',
+  'food',
+  'tasting',
+  'sports',
+  'racing',
+  'entertainment'
 ];
 
 const SearchBar = ({ onSearch, initialFilters = {} }: SearchBarProps) => {
@@ -210,7 +207,7 @@ const SearchBar = ({ onSearch, initialFilters = {} }: SearchBarProps) => {
               <option key={city} value={city}>
                 {city}
               </option>
-            )) || cities.Nigeria.map((city) => (
+            )) || cities['South Africa'].map((city) => (
               <option key={city} value={city}>
                 {city}
               </option>

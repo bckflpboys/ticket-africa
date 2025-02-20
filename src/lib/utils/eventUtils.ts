@@ -50,6 +50,7 @@ export const filterEvents = (
     maxPrice?: number;
     location?: string;
     searchQuery?: string;
+    tags?: string[];
   }
 ): Event[] => {
   return events.filter(event => {
@@ -60,8 +61,13 @@ export const filterEvents = (
                           event.location.toLowerCase().includes(filters.location.toLowerCase());
     const matchesSearch = !filters.searchQuery ||
                          event.title.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-                         event.description?.toLowerCase().includes(filters.searchQuery.toLowerCase());
+                         event.description?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+                         event.tag.toLowerCase().includes(filters.searchQuery.toLowerCase());
+    const matchesTags = !filters.tags?.length || 
+                       filters.tags.some(tag => 
+                         event.tag.toLowerCase().includes(tag.toLowerCase())
+                       );
 
-    return matchesCategory && matchesPrice && matchesLocation && matchesSearch;
+    return matchesCategory && matchesPrice && matchesLocation && matchesSearch && matchesTags;
   });
 };
