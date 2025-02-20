@@ -103,7 +103,7 @@ const Navbar = () => {
         </div>
 
         {/* Cart Dropdown */}
-        <div className={`dropdown dropdown-end ${isCartOpen ? 'dropdown-open' : ''}`}>
+        <div className="relative">
           <div 
             role="button" 
             className="btn btn-ghost btn-circle"
@@ -116,104 +116,107 @@ const Navbar = () => {
               <span className="badge badge-sm indicator-item">{getCartCount()}</span>
             </div>
           </div>
-          <div className="dropdown-content z-[999] card card-compact w-96 p-2 shadow bg-base-100 mt-2 border border-base-300 rounded-box">
-            <div className="card-body">
-              <div className="flex justify-between items-center border-b border-base-200 pb-2 mb-2">
-                <span className="text-lg font-semibold">Shopping Cart</span>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-base-content/70">{getCartCount()} Items</span>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsCartOpen(false);
-                    }}
-                    className="btn btn-ghost btn-sm btn-square"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Cart Items */}
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                {tickets.length === 0 && coolerBoxes.length === 0 ? (
-                  <div className="text-center py-4 text-base-content/70">
-                    Your cart is empty
+          {isCartOpen && (
+            <div className="absolute right-0 mt-2 w-96 z-[999] card card-compact p-2 shadow bg-base-100 border border-base-300 rounded-box">
+              <div className="card-body">
+                <div className="flex justify-between items-center border-b border-base-200 pb-2 mb-2">
+                  <span className="text-lg font-semibold">Shopping Cart</span>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-base-content/70">{getCartCount()} Items</span>
+                    <button 
+                      onClick={() => setIsCartOpen(false)}
+                      className="btn btn-ghost btn-sm btn-square"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-                ) : (
-                  <>
-                    {/* Tickets */}
-                    {tickets.map((ticket) => (
-                      <div key={ticket.id} className="flex items-start gap-4 p-2 hover:bg-base-200 rounded-lg">
-                        {ticket.imageUrl && (
-                          <div className="w-16 h-16 relative rounded-md overflow-hidden flex-shrink-0">
-                            <Image
-                              src={ticket.imageUrl}
-                              alt={ticket.eventName}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-grow">
-                          <h4 className="font-medium">{ticket.eventName}</h4>
-                          <p className="text-sm text-base-content/70 capitalize">
-                            {ticket.ticketType} Ticket × {ticket.quantity}
-                          </p>
-                          <p className="text-sm font-medium">{formatPrice(ticket.price * ticket.quantity)}</p>
-                        </div>
-                        <button
-                          onClick={() => removeTicket(ticket.id)}
-                          className="btn btn-ghost btn-sm btn-square text-error"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+                </div>
 
-                    {/* Cooler Boxes */}
-                    {coolerBoxes.map((coolerBox) => (
-                      <div key={coolerBox.id} className="flex items-start gap-4 p-2 hover:bg-base-200 rounded-lg">
-                        <div className="flex-grow">
-                          <h4 className="font-medium">{coolerBox.eventName}</h4>
-                          <p className="text-sm text-base-content/70">Cooler Box Pass</p>
-                          <p className="text-sm font-medium">{formatPrice(coolerBox.price)}</p>
+                {/* Cart Items */}
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                  {tickets.length === 0 && coolerBoxes.length === 0 ? (
+                    <div className="text-center py-4 text-base-content/70">
+                      Your cart is empty
+                    </div>
+                  ) : (
+                    <>
+                      {/* Tickets */}
+                      {tickets.map((ticket) => (
+                        <div key={ticket.id} className="flex items-start gap-4 p-2 hover:bg-base-200 rounded-lg">
+                          {ticket.imageUrl && (
+                            <div className="w-16 h-16 relative rounded-md overflow-hidden flex-shrink-0">
+                              <Image
+                                src={ticket.imageUrl}
+                                alt={ticket.eventName}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-grow">
+                            <h4 className="font-medium">{ticket.eventName}</h4>
+                            <p className="text-sm text-base-content/70 capitalize">
+                              {ticket.ticketType} Ticket 
+                              {ticket.quantity > 1 && (
+                                <span className="text-primary font-medium"> × {ticket.quantity}</span>
+                              )}
+                              {ticket.quantity === 1 && ' × 1'}
+                            </p>
+                            <p className="text-sm font-medium">{formatPrice(ticket.price * ticket.quantity)}</p>
+                          </div>
+                          <button
+                            onClick={() => removeTicket(ticket.id)}
+                            className="btn btn-ghost btn-sm btn-square text-error"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         </div>
-                        <button
-                          onClick={() => removeCoolerBox(coolerBox.id)}
-                          className="btn btn-ghost btn-sm btn-square text-error"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </>
+                      ))}
+
+                      {/* Cooler Boxes */}
+                      {coolerBoxes.map((coolerBox) => (
+                        <div key={coolerBox.id} className="flex items-start gap-4 p-2 hover:bg-base-200 rounded-lg">
+                          <div className="flex-grow">
+                            <h4 className="font-medium">{coolerBox.eventName}</h4>
+                            <p className="text-sm text-base-content/70">Cooler Box Pass</p>
+                            <p className="text-sm font-medium">{formatPrice(coolerBox.price)}</p>
+                          </div>
+                          <button
+                            onClick={() => removeCoolerBox(coolerBox.id)}
+                            className="btn btn-ghost btn-sm btn-square text-error"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+
+                {/* Cart Footer */}
+                {(tickets.length > 0 || coolerBoxes.length > 0) && (
+                  <div className="border-t border-base-200 pt-4 mt-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="font-semibold">Total (incl. 5% fee)</span>
+                      <span className="font-semibold">{formatPrice(getCartTotal())}</span>
+                    </div>
+                    <Link
+                      href="/checkout"
+                      className="btn btn-primary btn-block"
+                    >
+                      Proceed to Checkout
+                    </Link>
+                  </div>
                 )}
               </div>
-
-              {/* Cart Footer */}
-              {(tickets.length > 0 || coolerBoxes.length > 0) && (
-                <div className="border-t border-base-200 pt-4 mt-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-semibold">Total (incl. 5% fee)</span>
-                    <span className="font-semibold">{formatPrice(getCartTotal())}</span>
-                  </div>
-                  <Link
-                    href="/checkout"
-                    className="btn btn-primary btn-block"
-                  >
-                    Proceed to Checkout
-                  </Link>
-                </div>
-              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
 
