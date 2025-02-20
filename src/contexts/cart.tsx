@@ -47,6 +47,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addTicket = (ticket: Omit<TicketItem, 'id'>) => {
     setTickets(prev => {
+      // Check if the same type of ticket for the same event already exists
+      const existingTicket = prev.find(t => 
+        t.eventId === ticket.eventId && 
+        t.ticketType === ticket.ticketType
+      );
+
+      if (existingTicket) {
+        // Update quantity of existing ticket
+        return prev.map(t => 
+          t.id === existingTicket.id 
+            ? { ...t, quantity: t.quantity + ticket.quantity }
+            : t
+        );
+      }
+
+      // If no existing ticket found, add new one
       const id = `${ticket.eventId}-${ticket.ticketType}-${Date.now()}`;
       return [...prev, { ...ticket, id }];
     });
