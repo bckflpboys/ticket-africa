@@ -11,7 +11,7 @@ import { useCart } from '@/contexts/cart';
 export default function EventDetails() {
   const params = useParams();
   const id = params.id;
-  const { addToCart } = useCart();
+  const { addTicket, addCoolerBox } = useCart();
 
   const images = [
     "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop",
@@ -52,19 +52,6 @@ export default function EventDetails() {
     setCoolerBoxPass(prev => !prev);
   };
 
-  const calculateSubtotal = () => {
-    const ticketsTotal = Object.entries(tickets).reduce((sum, [type, count]) => {
-      return sum + (ticketPrices[type as keyof typeof ticketPrices] * count);
-    }, 0);
-    return ticketsTotal + (coolerBoxPass ? ticketPrices.coolerBox : 0);
-  };
-
-  const calculateTotal = () => {
-    const subtotal = calculateSubtotal();
-    const serviceFee = subtotal * 0.05; // 5% service fee
-    return subtotal + serviceFee;
-  };
-
   const handleAddToCart = () => {
     // Check if at least one ticket is selected
     const hasTickets = Object.values(tickets).some(quantity => quantity > 0);
@@ -75,16 +62,33 @@ export default function EventDetails() {
       return;
     }
 
-    const cartItem = {
-      eventId: id as string,
-      eventName: "Summer Music Festival",
-      tickets,
-      coolerBoxPass,
-      subtotal: calculateSubtotal(),
-      total: calculateTotal()
-    };
+    // Add individual tickets to cart
+    Object.entries(tickets).forEach(([type, quantity]) => {
+      if (quantity > 0) {
+        addTicket({
+          eventId: id as string,
+          eventName: "Summer Music Festival",
+          ticketType: type as 'regular' | 'vip' | 'vvip',
+          quantity,
+          price: ticketPrices[type as keyof typeof ticketPrices],
+          imageUrl: images[0]
+        });
+      }
+    });
+
+    // Add cooler box if selected
+    if (coolerBoxPass) {
+      addCoolerBox({
+        eventId: id as string,
+        eventName: "Summer Music Festival",
+        price: ticketPrices.coolerBox
+      });
+    }
+
+    // Reset form
+    setTickets({ regular: 0, vip: 0, vvip: 0 });
+    setCoolerBoxPass(false);
     
-    addToCart(cartItem);
     window.alert('Added to cart successfully!');
   };
 
@@ -600,15 +604,15 @@ export default function EventDetails() {
                           )}
                           <div className="flex justify-between text-sm">
                             <span>Subtotal</span>
-                            <span>₦{calculateSubtotal().toLocaleString()}</span>
+                            <span>₦{Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span>Service Fee (5%)</span>
-                            <span>₦{(calculateSubtotal() * 0.05).toLocaleString()}</span>
+                            <span>₦{(Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 0.05}</span>
                           </div>
                           <div className="flex justify-between font-medium pt-2 border-t border-base-300">
                             <span>Total</span>
-                            <span>₦{calculateTotal().toLocaleString()}</span>
+                            <span>₦{(Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 1.05}</span>
                           </div>
                         </div>
 

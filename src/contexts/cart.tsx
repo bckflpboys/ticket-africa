@@ -2,74 +2,95 @@
 
 import React, { createContext, useContext, useState } from 'react';
 
-type Tickets = {
-  regular: number;
-  vip: number;
-  vvip: number;
-};
-
-type CartItem = {
+interface TicketItem {
+  id: string;
   eventId: string;
   eventName: string;
-  tickets: Tickets;
-  coolerBoxPass: boolean;
-  subtotal: number;
-  total: number;
-};
+  ticketType: 'regular' | 'vip' | 'vvip';
+  quantity: number;
+  price: number;
+  imageUrl?: string;
+}
+
+interface CoolerBoxItem {
+  id: string;
+  eventId: string;
+  eventName: string;
+  price: number;
+}
 
 interface CartContextType {
-  cartItems: CartItem[];
-  addToCart: (item: CartItem) => void;
-  removeFromCart: (eventId: string) => void;
+  tickets: TicketItem[];
+  coolerBoxes: CoolerBoxItem[];
+  addTicket: (ticket: Omit<TicketItem, 'id'>) => void;
+  addCoolerBox: (coolerBox: Omit<CoolerBoxItem, 'id'>) => void;
+  removeTicket: (ticketId: string) => void;
+  removeCoolerBox: (coolerBoxId: string) => void;
   getCartTotal: () => number;
   getCartCount: () => number;
 }
 
 const CartContext = createContext<CartContextType>({
-  cartItems: [],
-  addToCart: () => {},
-  removeFromCart: () => {},
+  tickets: [],
+  coolerBoxes: [],
+  addTicket: () => {},
+  addCoolerBox: () => {},
+  removeTicket: () => {},
+  removeCoolerBox: () => {},
   getCartTotal: () => 0,
   getCartCount: () => 0,
 });
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [coolerBoxes, setCoolerBoxes] = useState<CoolerBoxItem[]>([]);
 
-  const addToCart = (item: CartItem) => {
-    setCartItems(prev => {
-      const existingItemIndex = prev.findIndex(i => i.eventId === item.eventId);
-      if (existingItemIndex >= 0) {
-        const newItems = [...prev];
-        newItems[existingItemIndex] = item;
-        return newItems;
-      }
-      return [...prev, item];
+  const addTicket = (ticket: Omit<TicketItem, 'id'>) => {
+    setTickets(prev => {
+      const id = `${ticket.eventId}-${ticket.ticketType}-${Date.now()}`;
+      return [...prev, { ...ticket, id }];
     });
   };
 
-  const removeFromCart = (eventId: string) => {
-    setCartItems(prev => prev.filter(item => item.eventId !== eventId));
+  const addCoolerBox = (coolerBox: Omit<CoolerBoxItem, 'id'>) => {
+    setCoolerBoxes(prev => {
+      const id = `${coolerBox.eventId}-cooler-${Date.now()}`;
+      return [...prev, { ...coolerBox, id }];
+    });
+  };
+
+  const removeTicket = (ticketId: string) => {
+    setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
+  };
+
+  const removeCoolerBox = (coolerBoxId: string) => {
+    setCoolerBoxes(prev => prev.filter(coolerBox => coolerBox.id !== coolerBoxId));
   };
 
   const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + item.total, 0);
+    const ticketsTotal = tickets.reduce((total, ticket) => total + (ticket.price * ticket.quantity), 0);
+    const coolerBoxesTotal = coolerBoxes.reduce((total, coolerBox) => total + coolerBox.price, 0);
+    const subtotal = ticketsTotal + coolerBoxesTotal;
+    const serviceFee = subtotal * 0.05; // 5% service fee
+    return subtotal + serviceFee;
   };
 
   const getCartCount = () => {
-    return cartItems.reduce((count, item) => {
-      return count + item.tickets.regular + item.tickets.vip + item.tickets.vvip + (item.coolerBoxPass ? 1 : 0);
-    }, 0);
+    const ticketsCount = tickets.reduce((count, ticket) => count + ticket.quantity, 0);
+    return ticketsCount + coolerBoxes.length;
   };
 
   return (
     <CartContext.Provider 
       value={{ 
-        cartItems, 
-        addToCart, 
-        removeFromCart, 
-        getCartTotal, 
-        getCartCount 
+        tickets,
+        coolerBoxes,
+        addTicket,
+        addCoolerBox,
+        removeTicket,
+        removeCoolerBox,
+        getCartTotal,
+        getCartCount
       }}
     >
       {children}

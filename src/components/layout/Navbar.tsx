@@ -4,13 +4,21 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/contexts/cart';
+import Image from 'next/image';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { getCartCount, getCartTotal, cartItems, removeFromCart } = useCart();
+  const { tickets, coolerBoxes, removeTicket, removeCoolerBox, getCartTotal, getCartCount } = useCart();
 
   const isActive = (path: string) => pathname === path;
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-ZA', {
+      style: 'currency',
+      currency: 'ZAR'
+    }).format(price);
+  };
 
   return (
     <nav className="navbar bg-transparent backdrop-blur-sm border-b border-base-200/10 sticky top-0 z-50">
@@ -103,7 +111,7 @@ const Navbar = () => {
               <span className="badge badge-sm indicator-item">{getCartCount()}</span>
             </div>
           </div>
-          <div tabIndex={0} className="dropdown-content z-[999] card card-compact w-80 p-2 shadow bg-base-100 mt-2 border border-base-300 rounded-box">
+          <div tabIndex={0} className="dropdown-content z-[999] card card-compact w-96 p-2 shadow bg-base-100 mt-2 border border-base-300 rounded-box">
             <div className="card-body">
               <div className="flex justify-between items-center border-b border-base-200 pb-2 mb-2">
                 <span className="text-lg font-semibold">Shopping Cart</span>
@@ -112,82 +120,79 @@ const Navbar = () => {
 
               {/* Cart Items */}
               <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                {cartItems.map((item) => (
-                  <div key={item.eventId} className="flex flex-col gap-2 py-2 border-b border-base-200">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-medium">{item.eventName || 'Event'}</h3>
-                      <button 
-                        onClick={() => removeFromCart(item.eventId)}
-                        className="btn btn-ghost btn-sm btn-square"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    
-                    {/* Tickets */}
-                    <div className="space-y-1 text-sm">
-                      {item.tickets.regular > 0 && (
-                        <div className="flex justify-between">
-                          <span>Regular Ticket × {item.tickets.regular}</span>
-                          <span>₦{(item.tickets.regular * 5000).toLocaleString()}</span>
-                        </div>
-                      )}
-                      {item.tickets.vip > 0 && (
-                        <div className="flex justify-between">
-                          <span>VIP Ticket × {item.tickets.vip}</span>
-                          <span>₦{(item.tickets.vip * 15000).toLocaleString()}</span>
-                        </div>
-                      )}
-                      {item.tickets.vvip > 0 && (
-                        <div className="flex justify-between">
-                          <span>VVIP Ticket × {item.tickets.vvip}</span>
-                          <span>₦{(item.tickets.vvip * 30000).toLocaleString()}</span>
-                        </div>
-                      )}
-                      {item.coolerBoxPass && (
-                        <div className="flex justify-between">
-                          <span>Cooler Box Pass</span>
-                          <span>₦2,000</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                {cartItems.length === 0 && (
-                  <div className="text-center py-8 text-base-content/70">
+                {tickets.length === 0 && coolerBoxes.length === 0 ? (
+                  <div className="text-center py-4 text-base-content/70">
                     Your cart is empty
                   </div>
+                ) : (
+                  <>
+                    {/* Tickets */}
+                    {tickets.map((ticket) => (
+                      <div key={ticket.id} className="flex items-start gap-4 p-2 hover:bg-base-200 rounded-lg">
+                        {ticket.imageUrl && (
+                          <div className="w-16 h-16 relative rounded-md overflow-hidden flex-shrink-0">
+                            <Image
+                              src={ticket.imageUrl}
+                              alt={ticket.eventName}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-grow">
+                          <h4 className="font-medium">{ticket.eventName}</h4>
+                          <p className="text-sm text-base-content/70 capitalize">
+                            {ticket.ticketType} Ticket × {ticket.quantity}
+                          </p>
+                          <p className="text-sm font-medium">{formatPrice(ticket.price * ticket.quantity)}</p>
+                        </div>
+                        <button
+                          onClick={() => removeTicket(ticket.id)}
+                          className="btn btn-ghost btn-sm btn-square text-error"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Cooler Boxes */}
+                    {coolerBoxes.map((coolerBox) => (
+                      <div key={coolerBox.id} className="flex items-start gap-4 p-2 hover:bg-base-200 rounded-lg">
+                        <div className="flex-grow">
+                          <h4 className="font-medium">{coolerBox.eventName}</h4>
+                          <p className="text-sm text-base-content/70">Cooler Box Pass</p>
+                          <p className="text-sm font-medium">{formatPrice(coolerBox.price)}</p>
+                        </div>
+                        <button
+                          onClick={() => removeCoolerBox(coolerBox.id)}
+                          className="btn btn-ghost btn-sm btn-square text-error"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </>
                 )}
               </div>
 
-              {cartItems.length > 0 && (
-                <>
-                  {/* Cart Summary */}
-                  <div className="border-t border-base-200 pt-4 mt-2 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Subtotal</span>
-                      <span>₦{getCartTotal().toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Service Fee (5%)</span>
-                      <span>₦{(getCartTotal() * 0.05).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between font-medium pt-2 border-t border-base-200">
-                      <span>Total</span>
-                      <span>₦{(getCartTotal() * 1.05).toLocaleString()}</span>
-                    </div>
+              {/* Cart Footer */}
+              {(tickets.length > 0 || coolerBoxes.length > 0) && (
+                <div className="border-t border-base-200 pt-4 mt-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="font-semibold">Total (incl. 5% fee)</span>
+                    <span className="font-semibold">{formatPrice(getCartTotal())}</span>
                   </div>
-
-                  {/* Action Buttons */}
-                  <div className="card-actions mt-4">
-                    <Link href="/cart" className="btn btn-primary btn-block">
-                      Checkout
-                    </Link>
-                  </div>
-                </>
+                  <Link
+                    href="/checkout"
+                    className="btn btn-primary btn-block"
+                  >
+                    Proceed to Checkout
+                  </Link>
+                </div>
               )}
             </div>
           </div>
