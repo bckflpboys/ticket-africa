@@ -8,6 +8,7 @@ import Image from 'next/image';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const pathname = usePathname();
   const { tickets, coolerBoxes, removeTicket, removeCoolerBox, getCartTotal, getCartCount } = useCart();
 
@@ -102,8 +103,12 @@ const Navbar = () => {
         </div>
 
         {/* Cart Dropdown */}
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+        <div className={`dropdown dropdown-end ${isCartOpen ? 'dropdown-open' : ''}`}>
+          <div 
+            role="button" 
+            className="btn btn-ghost btn-circle"
+            onClick={() => setIsCartOpen(!isCartOpen)}
+          >
             <div className="indicator">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -111,11 +116,21 @@ const Navbar = () => {
               <span className="badge badge-sm indicator-item">{getCartCount()}</span>
             </div>
           </div>
-          <div tabIndex={0} className="dropdown-content z-[999] card card-compact w-96 p-2 shadow bg-base-100 mt-2 border border-base-300 rounded-box">
+          <div className="dropdown-content z-[999] card card-compact w-96 p-2 shadow bg-base-100 mt-2 border border-base-300 rounded-box">
             <div className="card-body">
               <div className="flex justify-between items-center border-b border-base-200 pb-2 mb-2">
                 <span className="text-lg font-semibold">Shopping Cart</span>
-                <span className="text-sm text-base-content/70">{getCartCount()} Items</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-base-content/70">{getCartCount()} Items</span>
+                  <button 
+                    onClick={() => setIsCartOpen(false)}
+                    className="btn btn-ghost btn-sm btn-square"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               {/* Cart Items */}
