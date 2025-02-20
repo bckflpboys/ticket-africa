@@ -7,11 +7,13 @@ import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '@/contexts/cart';
+import { useToast } from '@/contexts/toast';
 
 export default function EventDetails() {
   const params = useParams();
   const id = params.id;
   const { addTicket, addCoolerBox } = useCart();
+  const { showToast } = useToast();
 
   const images = [
     "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop",
@@ -28,12 +30,6 @@ export default function EventDetails() {
     vvip: 0
   });
   const [coolerBoxPass, setCoolerBoxPass] = useState(false);
-  const [lastAddedTickets, setLastAddedTickets] = useState({
-    regular: 0,
-    vip: 0,
-    vvip: 0
-  });
-  const [lastAddedCoolerBox, setLastAddedCoolerBox] = useState(false);
 
   const ticketPrices = {
     regular: 350,
@@ -59,7 +55,7 @@ export default function EventDetails() {
   const toggleCoolerBoxPass = () => {
     const hasTickets = Object.values(tickets).some(quantity => quantity > 0);
     if (!hasTickets && !coolerBoxPass) {
-      window.alert('Please select at least one ticket before adding a Cooler Box Pass.');
+      showToast('Please select at least one ticket before adding a Cooler Box Pass.', 'warning');
       return;
     }
     setCoolerBoxPass(prev => !prev);
@@ -70,30 +66,27 @@ export default function EventDetails() {
     const hasTickets = Object.values(tickets).some(quantity => quantity > 0);
     
     if (!hasTickets && coolerBoxPass) {
-      window.alert('You cannot add a Cooler Box Pass without selecting at least one ticket.');
+      showToast('You cannot add a Cooler Box Pass without selecting at least one ticket.', 'error');
       setCoolerBoxPass(false);
       return;
     }
 
-    // Add only newly selected tickets to cart
+    // Add tickets to cart
     Object.entries(tickets).forEach(([type, quantity]) => {
-      const previousQuantity = lastAddedTickets[type as keyof typeof lastAddedTickets];
-      const newTickets = quantity - previousQuantity;
-      
-      if (newTickets > 0) {
+      if (quantity > 0) {
         addTicket({
           eventId: id as string,
           eventName: "Summer Music Festival",
           ticketType: type as 'regular' | 'vip' | 'vvip',
-          quantity: newTickets,
+          quantity: quantity,
           price: ticketPrices[type as keyof typeof ticketPrices],
           imageUrl: images[0]
         });
       }
     });
 
-    // Add cooler box if newly selected
-    if (coolerBoxPass && !lastAddedCoolerBox) {
+    // Add cooler box if selected
+    if (coolerBoxPass) {
       addCoolerBox({
         eventId: id as string,
         eventName: "Summer Music Festival",
@@ -101,11 +94,15 @@ export default function EventDetails() {
       });
     }
     
-    // Update the last added state
-    setLastAddedTickets({...tickets});
-    setLastAddedCoolerBox(coolerBoxPass);
+    // Reset tickets and cooler box after adding to cart
+    setTickets({
+      regular: 0,
+      vip: 0,
+      vvip: 0
+    });
+    setCoolerBoxPass(false);
     
-    window.alert('Added to cart successfully!');
+    showToast('Added to cart successfully!', 'success');
   };
 
   const nextImage = () => {

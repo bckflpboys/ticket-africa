@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState } from 'react';
+import { useToast } from './toast';
 
 interface TicketItem {
   id: string;
@@ -44,6 +45,7 @@ const CartContext = createContext<CartContextType>({
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [coolerBoxes, setCoolerBoxes] = useState<CoolerBoxItem[]>([]);
+  const { showToast } = useToast();
 
   const addTicket = (ticket: Omit<TicketItem, 'id'>) => {
     setTickets(prev => {
@@ -79,24 +81,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const ticketToRemove = tickets.find(t => t.id === ticketId);
     if (!ticketToRemove) return;
 
+    console.log('Removing ticket:', ticketToRemove);
+    console.log('Current tickets:', tickets);
+    console.log('Current cooler boxes:', coolerBoxes);
+
     // Check if this is the last ticket for this event
     const remainingEventTickets = tickets.filter(t => 
       t.eventId === ticketToRemove.eventId && t.id !== ticketId
     );
 
+    console.log('Remaining event tickets:', remainingEventTickets);
+
     // If this is the last ticket and there's a cooler box for this event
     const hasEventCoolerBox = coolerBoxes.some(cb => cb.eventId === ticketToRemove.eventId);
     
+    console.log('Has event cooler box:', hasEventCoolerBox);
+    console.log('Remaining event tickets length:', remainingEventTickets.length);
+
     if (remainingEventTickets.length === 0 && hasEventCoolerBox) {
-      window.alert('Cannot remove the last ticket while a cooler box pass exists for this event.');
+      console.log('Should show error toast - Cannot remove last ticket with cooler box');
+      showToast('Cannot remove the last ticket while a cooler box pass exists for this event.', 'error');
       return;
     }
 
     setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
+    showToast('Ticket removed from cart', 'info');
   };
 
   const removeCoolerBox = (coolerBoxId: string) => {
-    setCoolerBoxes(prev => prev.filter(coolerBox => coolerBox.id !== coolerBoxId));
+    setCoolerBoxes(prev => prev.filter(box => box.id !== coolerBoxId));
+    showToast('Cooler box removed from cart', 'info');
   };
 
   const getCartTotal = () => {
