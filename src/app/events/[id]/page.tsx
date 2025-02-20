@@ -30,10 +30,17 @@ export default function EventDetails() {
   const [coolerBoxPass, setCoolerBoxPass] = useState(false);
 
   const ticketPrices = {
-    regular: 5000,
-    vip: 15000,
-    vvip: 30000,
-    coolerBox: 2000
+    regular: 350,
+    vip: 750,
+    vvip: 1500,
+    coolerBox: 100
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-ZA', {
+      style: 'currency',
+      currency: 'ZAR'
+    }).format(price);
   };
 
   const updateTicketCount = (type: 'regular' | 'vip' | 'vvip', increment: boolean) => {
@@ -474,7 +481,7 @@ export default function EventDetails() {
                             <div>
                               <h4 className="font-medium">Regular Ticket</h4>
                               <p className="text-sm text-base-content/70">General admission</p>
-                              <p className="text-primary font-medium mt-1">₦{ticketPrices.regular.toLocaleString()}</p>
+                              <p className="text-primary font-medium mt-1">{formatPrice(ticketPrices.regular)}</p>
                             </div>
                             <div className="flex items-center gap-3">
                               <button 
@@ -504,7 +511,7 @@ export default function EventDetails() {
                                 <span className="badge badge-primary badge-sm">POPULAR</span>
                               </div>
                               <p className="text-sm text-base-content/70">Premium seating & complimentary drinks</p>
-                              <p className="text-primary font-medium mt-1">₦{ticketPrices.vip.toLocaleString()}</p>
+                              <p className="text-primary font-medium mt-1">{formatPrice(ticketPrices.vip)}</p>
                             </div>
                             <div className="flex items-center gap-3">
                               <button 
@@ -531,7 +538,7 @@ export default function EventDetails() {
                             <div>
                               <h4 className="font-medium">VVIP Ticket</h4>
                               <p className="text-sm text-base-content/70">Exclusive access & full service</p>
-                              <p className="text-primary font-medium mt-1">₦{ticketPrices.vvip.toLocaleString()}</p>
+                              <p className="text-primary font-medium mt-1">{formatPrice(ticketPrices.vvip)}</p>
                             </div>
                             <div className="flex items-center gap-3">
                               <button 
@@ -561,7 +568,7 @@ export default function EventDetails() {
                                 <span className="badge badge-accent badge-sm">OPTIONAL</span>
                               </div>
                               <p className="text-sm text-base-content/70">Bring your own drinks (max 50L)</p>
-                              <p className="text-primary font-medium mt-1">₦{ticketPrices.coolerBox.toLocaleString()}</p>
+                              <p className="text-primary font-medium mt-1">{formatPrice(ticketPrices.coolerBox)}</p>
                             </div>
                             <div>
                               <input 
@@ -581,38 +588,38 @@ export default function EventDetails() {
                           {tickets.regular > 0 && (
                             <div className="flex justify-between text-sm">
                               <span>Regular Ticket × {tickets.regular}</span>
-                              <span>₦{(tickets.regular * ticketPrices.regular).toLocaleString()}</span>
+                              <span>{formatPrice(tickets.regular * ticketPrices.regular)}</span>
                             </div>
                           )}
                           {tickets.vip > 0 && (
                             <div className="flex justify-between text-sm">
                               <span>VIP Ticket × {tickets.vip}</span>
-                              <span>₦{(tickets.vip * ticketPrices.vip).toLocaleString()}</span>
+                              <span>{formatPrice(tickets.vip * ticketPrices.vip)}</span>
                             </div>
                           )}
                           {tickets.vvip > 0 && (
                             <div className="flex justify-between text-sm">
                               <span>VVIP Ticket × {tickets.vvip}</span>
-                              <span>₦{(tickets.vvip * ticketPrices.vvip).toLocaleString()}</span>
+                              <span>{formatPrice(tickets.vvip * ticketPrices.vvip)}</span>
                             </div>
                           )}
                           {coolerBoxPass && (
                             <div className="flex justify-between text-sm">
                               <span>Cooler Box Pass</span>
-                              <span>₦{ticketPrices.coolerBox.toLocaleString()}</span>
+                              <span>{formatPrice(ticketPrices.coolerBox)}</span>
                             </div>
                           )}
                           <div className="flex justify-between text-sm">
                             <span>Subtotal</span>
-                            <span>₦{Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)}</span>
+                            <span>{formatPrice(Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0))}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span>Service Fee (5%)</span>
-                            <span>₦{(Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 0.05}</span>
+                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 0.05)}</span>
                           </div>
                           <div className="flex justify-between font-medium pt-2 border-t border-base-300">
                             <span>Total</span>
-                            <span>₦{(Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 1.05}</span>
+                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 1.05)}</span>
                           </div>
                         </div>
 
