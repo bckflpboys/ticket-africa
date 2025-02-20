@@ -28,6 +28,12 @@ export default function EventDetails() {
     vvip: 0
   });
   const [coolerBoxPass, setCoolerBoxPass] = useState(false);
+  const [lastAddedTickets, setLastAddedTickets] = useState({
+    regular: 0,
+    vip: 0,
+    vvip: 0
+  });
+  const [lastAddedCoolerBox, setLastAddedCoolerBox] = useState(false);
 
   const ticketPrices = {
     regular: 350,
@@ -69,32 +75,35 @@ export default function EventDetails() {
       return;
     }
 
-    // Add individual tickets to cart
+    // Add only newly selected tickets to cart
     Object.entries(tickets).forEach(([type, quantity]) => {
-      if (quantity > 0) {
+      const previousQuantity = lastAddedTickets[type as keyof typeof lastAddedTickets];
+      const newTickets = quantity - previousQuantity;
+      
+      if (newTickets > 0) {
         addTicket({
           eventId: id as string,
           eventName: "Summer Music Festival",
           ticketType: type as 'regular' | 'vip' | 'vvip',
-          quantity,
+          quantity: newTickets,
           price: ticketPrices[type as keyof typeof ticketPrices],
           imageUrl: images[0]
         });
       }
     });
 
-    // Add cooler box if selected
-    if (coolerBoxPass) {
+    // Add cooler box if newly selected
+    if (coolerBoxPass && !lastAddedCoolerBox) {
       addCoolerBox({
         eventId: id as string,
         eventName: "Summer Music Festival",
         price: ticketPrices.coolerBox
       });
     }
-
-    // Reset form
-    setTickets({ regular: 0, vip: 0, vvip: 0 });
-    setCoolerBoxPass(false);
+    
+    // Update the last added state
+    setLastAddedTickets({...tickets});
+    setLastAddedCoolerBox(coolerBoxPass);
     
     window.alert('Added to cart successfully!');
   };
