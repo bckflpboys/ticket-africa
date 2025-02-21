@@ -13,6 +13,7 @@ cloudinary.config({
 });
 
 export async function POST(req: Request) {
+  let requestBody: any;
   try {
     const session = await getServerSession(authOptions);
 
@@ -23,15 +24,40 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
+    requestBody = await req.json();
 
     // Validate required fields
-    const requiredFields = ['title', 'description', 'date', 'endTime', 'location', 'category', 'imageUrl', 'ticketTypes'];
-    const missingFields = requiredFields.filter(field => !body[field]);
+    const requiredFields = ['title', 'description', 'date', 'endTime', 'location', 'category', 'images', 'ticketTypes'];
+    const missingFields = requiredFields.filter(field => !requestBody[field]);
 
     if (missingFields.length > 0) {
       return NextResponse.json(
         { error: `Missing required fields: ${missingFields.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate images array
+    if (!Array.isArray(requestBody.images)) {
+      return NextResponse.json(
+        { error: 'Images must be an array' },
+        { status: 400 }
+      );
+    }
+
+    // Filter out any null or invalid image URLs
+    requestBody.images = requestBody.images.filter((url: string | null) => typeof url === 'string' && url.startsWith('http'));
+
+    if (requestBody.images.length === 0) {
+      return NextResponse.json(
+        { error: 'At least one valid image URL is required' },
+        { status: 400 }
+      );
+    }
+
+    if (requestBody.images.length > 6) {
+      return NextResponse.json(
+        { error: 'Maximum of 6 images allowed' },
         { status: 400 }
       );
     }
@@ -41,7 +67,7 @@ export async function POST(req: Request) {
 
     // Create new event
     const event = await Event.create({
-      ...body,
+      ...requestBody,
       organizer: session.user.id,
       status: 'draft',
     });
@@ -50,10 +76,34 @@ export async function POST(req: Request) {
       id: event._id.toString(),
       ...event.toJSON()
     });
-  } catch (error) {
-    console.error('Error creating event:', error);
+  } catch (error: any) {
+    console.error('Error creating event:', {
+      message: error.message,
+      name: error.name,
+      errors: error.errors,
+      body: requestBody
+    });
+
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+    
+    if (error.name === 'ValidationError') {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.message },
+        { status: 400 }
+      );
+    }
+    
+    // Log the full error for debugging
+    console.error('Full error:', error);
+
     return NextResponse.json(
-      { error: 'Failed to create event' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }
