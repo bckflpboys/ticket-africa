@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { CldUploadWidget } from 'next-cloudinary';
+import Image from 'next/image';
 
 // Categories from your Event model
 const CATEGORIES = [
@@ -26,7 +26,8 @@ export default function CreateEvent() {
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [ticketTypes, setTicketTypes] = useState([
     { name: '', price: 0, quantity: 0 }
   ]);
@@ -36,7 +37,8 @@ export default function CreateEvent() {
     title: '',
     description: '',
     date: '',
-    time: '',
+    startTime: '',
+    endTime: '',
     location: '',
     category: '',
     tags: '',
@@ -77,6 +79,31 @@ export default function CreateEvent() {
         throw new Error('You must be logged in to create an event');
       }
 
+      let uploadedImageUrl = '';
+      
+      if (selectedImage) {
+        try {
+          const formData = new FormData();
+          formData.append('file', selectedImage);
+
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            throw new Error(`Upload failed: ${errorData.error || 'Unknown error'}`);
+          }
+
+          const uploadResult = await uploadResponse.json();
+          uploadedImageUrl = uploadResult.url;
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          throw new Error('Failed to upload image. Please try again.');
+        }
+      }
+
       const response = await fetch('/api/events', {
         method: 'POST',
         headers: {
@@ -84,8 +111,9 @@ export default function CreateEvent() {
         },
         body: JSON.stringify({
           ...formData,
-          date: new Date(`${formData.date}T${formData.time}`).toISOString(),
-          imageUrl,
+          date: new Date(`${formData.date}T${formData.startTime}`).toISOString(),
+          endTime: new Date(`${formData.date}T${formData.endTime}`).toISOString(),
+          imageUrl: uploadedImageUrl,
           ticketTypes,
           tags: formData.tags.split(',').map(tag => tag.trim()),
         }),
@@ -150,8 +178,8 @@ export default function CreateEvent() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
+                  <div className="space-y-4">
+                    <div className="form-control">
                       <label className="label">
                         <span className="label-text">Date</span>
                       </label>
@@ -160,22 +188,37 @@ export default function CreateEvent() {
                         name="date"
                         value={formData.date}
                         onChange={handleInputChange}
-                        className="input input-bordered w-full"
+                        className="input input-bordered"
                         required
                       />
                     </div>
-                    <div>
-                      <label className="label">
-                        <span className="label-text">Time</span>
-                      </label>
-                      <input
-                        type="time"
-                        name="time"
-                        value={formData.time}
-                        onChange={handleInputChange}
-                        className="input input-bordered w-full"
-                        required
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Start Time</span>
+                        </label>
+                        <input
+                          type="time"
+                          name="startTime"
+                          value={formData.startTime}
+                          onChange={handleInputChange}
+                          className="input input-bordered"
+                          required
+                        />
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">End Time</span>
+                        </label>
+                        <input
+                          type="time"
+                          name="endTime"
+                          value={formData.endTime}
+                          onChange={handleInputChange}
+                          className="input input-bordered"
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -243,31 +286,39 @@ export default function CreateEvent() {
               <div className="card-body">
                 <h2 className="card-title">Event Image</h2>
                 <div className="space-y-4">
-                  {imageUrl && (
+                  {previewUrl && (
                     <div className="relative w-full h-48">
-                      <img
-                        src={imageUrl}
-                        alt="Event"
-                        className="w-full h-full object-cover rounded-lg"
+                      <Image
+                        src={previewUrl}
+                        alt="Event preview"
+                        fill
+                        className="object-cover rounded-lg"
                       />
                     </div>
                   )}
-                  <CldUploadWidget
-                    uploadPreset="event_images"
-                    onUpload={(result: any) => {
-                      setImageUrl(result.info.secure_url);
-                    }}
-                  >
-                    {({ open }) => (
-                      <button
-                        type="button"
-                        onClick={() => open()}
-                        className="btn btn-secondary w-full"
-                      >
-                        Upload Image
-                      </button>
-                    )}
-                  </CldUploadWidget>
+                  <div className="flex flex-col gap-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setSelectedImage(file);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setPreviewUrl(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="file-input file-input-bordered w-full"
+                    />
+                  </div>
+                  {!previewUrl && (
+                    <p className="text-sm text-base-content/70 text-center">
+                      Select an image for your event. Recommended size: 1200x630px
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

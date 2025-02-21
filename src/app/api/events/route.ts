@@ -3,6 +3,14 @@ import { getServerSession } from 'next-auth';
 import { connectToDB } from '@/lib/mongoose';
 import Event from '@/models/Event';
 import { authOptions } from '../auth/[...nextauth]/route';
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +26,7 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     // Validate required fields
-    const requiredFields = ['title', 'description', 'date', 'location', 'category', 'imageUrl', 'ticketTypes'];
+    const requiredFields = ['title', 'description', 'date', 'endTime', 'location', 'category', 'imageUrl', 'ticketTypes'];
     const missingFields = requiredFields.filter(field => !body[field]);
 
     if (missingFields.length > 0) {
@@ -38,7 +46,10 @@ export async function POST(req: Request) {
       status: 'draft',
     });
 
-    return NextResponse.json(event);
+    return NextResponse.json({
+      id: event._id.toString(),
+      ...event.toJSON()
+    });
   } catch (error) {
     console.error('Error creating event:', error);
     return NextResponse.json(
