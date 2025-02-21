@@ -61,6 +61,14 @@ const Navbar = () => {
               </li>
               <li>
                 <Link 
+                  href="/events/create" 
+                  className={isActive('/events/create') ? 'active' : ''}
+                >
+                  Create Event
+                </Link>
+              </li>
+              <li>
+                <Link 
                   href="/blog"
                   className={isActive('/blog') ? 'active' : ''}
                 >
@@ -235,6 +243,15 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Events
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/events/create" 
+                className={`text-lg ${isActive('/events/create') ? 'text-primary font-semibold' : ''}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Create Event
               </Link>
             </li>
             <li>
