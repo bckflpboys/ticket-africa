@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/contexts/cart';
 import Image from 'next/image';
+import { useSession, signOut } from 'next-auth/react';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const pathname = usePathname();
   const { tickets, coolerBoxes, removeTicket, removeCoolerBox, getCartTotal, getCartCount } = useCart();
+  const { data: session } = useSession();
 
   const isActive = (path: string) => pathname === path;
 
@@ -26,21 +28,29 @@ const Navbar = () => {
       <div className="container mx-auto flex justify-between items-center">
         {/* User Account */}
         <div className="dropdown dropdown-bottom">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
-            <div className="w-10 rounded-full">
-              <img alt="User Avatar" src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=2080&auto=format&fit=crop" />
-            </div>
-          </div>
-          <ul tabIndex={0} className="dropdown-content menu menu-sm z-[999] p-2 shadow bg-base-100 rounded-box w-52 mt-2 border border-base-300">
-            <li className="menu-title px-2 pt-1 pb-2 border-b border-base-200">
-              <span className="text-sm font-semibold">John Doe</span>
-              <span className="text-xs font-normal text-base-content/70">john@example.com</span>
-            </li>
-            <li><Link href="/profile" className="py-2">Profile</Link></li>
-            <li><Link href="/orders" className="py-2">My Orders</Link></li>
-            <li><Link href="/settings" className="py-2">Settings</Link></li>
-            <li><a className="py-2">Logout</a></li>
-          </ul>
+          {session ? (
+            <>
+              <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+                <div className="w-10 rounded-full">
+                  <img alt="User Avatar" src={session.user?.image || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=2080&auto=format&fit=crop"} />
+                </div>
+              </div>
+              <ul tabIndex={0} className="dropdown-content menu menu-sm z-[999] p-2 shadow bg-base-100 rounded-box w-52 mt-2 border border-base-300">
+                <li className="menu-title px-2 pt-1 pb-2 border-b border-base-200">
+                  <span className="text-sm font-semibold">{session.user?.name}</span>
+                  <span className="text-xs font-normal text-base-content/70">{session.user?.email}</span>
+                </li>
+                <li><Link href="/profile" className="py-2">Profile</Link></li>
+                <li><Link href="/orders" className="py-2">My Orders</Link></li>
+                <li><Link href="/settings" className="py-2">Settings</Link></li>
+                <li><button onClick={() => signOut()} className="py-2">Logout</button></li>
+              </ul>
+            </>
+          ) : (
+            <Link href="/auth/signin" className="btn btn-ghost">
+              Sign In
+            </Link>
+          )}
         </div>
 
         <div className="flex-1 flex justify-center gap-8 items-center">

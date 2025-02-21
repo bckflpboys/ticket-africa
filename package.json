@@ -2,6 +2,7 @@
   "dependencies": {
     "@paystack/inline-js": "^2.22.2",
     "@types/jsonwebtoken": "^9.0.8",
+    "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
     "daisyui": "^4.12.23",
     "framer-motion": "^12.4.4",
@@ -12,10 +13,12 @@
     "next-cloudinary": "^6.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/react": "^19.0.10",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.31",
