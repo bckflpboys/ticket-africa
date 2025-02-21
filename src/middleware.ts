@@ -24,7 +24,7 @@ export default withAuth(
 
     // Handle role-based access
     if (req.nextUrl.pathname.startsWith('/events/create')) {
-      if (token.role !== 'organizer' && token.role !== 'admin') {
+      if (!['organizer', 'admin', 'staff', 'user'].includes(token.role)) {
         return NextResponse.redirect(new URL('/', req.url));
       }
     }
