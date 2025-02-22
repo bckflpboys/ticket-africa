@@ -24,7 +24,7 @@ interface Event {
   date: string;
   endTime: string;
   images: string[];
-  status: 'draft' | 'published' | 'cancelled';
+  status: 'draft' | 'published' | 'cancelled' | 'active';
   location: string; // This is a JSON string
   ticketTypes?: {
     _id: string;
@@ -238,7 +238,7 @@ export default function OrganizerEventsPage() {
     if (event.status === 'draft') return 'badge-warning';
     if (event.status === 'cancelled') return 'badge-error';
     if (endDate < now) return 'badge-neutral';
-    if (startDate <= now && endDate >= now) return 'badge-success';
+    if (event.status === 'active') return 'badge-success';
     return 'badge-primary';
   };
 
@@ -266,6 +266,30 @@ export default function OrganizerEventsPage() {
     return tickets.reduce((total, ticket) => {
       return total + (ticket.quantitySold || 0) * ticket.price;
     }, 0);
+  };
+
+  const activateEvent = async (eventId: string) => {
+    try {
+      const response = await fetch(`/api/organizer/events/${eventId}/activate`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to activate event');
+      }
+
+      // Update the event status locally
+      setEvents(events.map(event => 
+        event._id === eventId 
+          ? { ...event, status: 'active' } 
+          : event
+      ));
+    } catch (error) {
+      console.error('Error activating event:', error);
+    }
   };
 
   return (
@@ -417,13 +441,26 @@ export default function OrganizerEventsPage() {
                       </div>
                     </div>
 
-                    <div className="card-actions justify-end mt-4">
-                      <a href={`/events/${event._id}/edit`} className="btn btn-ghost btn-sm">
-                        <Edit className="w-4 h-4" />
-                      </a>
-                      <button className="btn btn-ghost btn-sm text-error">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="card-actions justify-between mt-4">
+                      {event.status === 'draft' && (
+                        <button 
+                          onClick={() => activateEvent(event._id)}
+                          className="btn btn-primary btn-sm"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-1">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Activate
+                        </button>
+                      )}
+                      <div className="flex gap-2">
+                        <a href={`/events/${event._id}/edit`} className="btn btn-ghost btn-sm">
+                          <Edit className="w-4 h-4" />
+                        </a>
+                        <button className="btn btn-ghost btn-sm text-error">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
