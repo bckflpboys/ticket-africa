@@ -33,6 +33,7 @@ interface Event {
     quantity: number;
     quantitySold?: number;
   }[];
+  category?: string;
 }
 
 interface VenueInfo {
@@ -163,13 +164,45 @@ export default function OrganizerEventsPage() {
     return `${formattedDate} at ${formattedTime}`;
   };
 
+  const matchesSearchQuery = (event: Event, query: string) => {
+    if (!query) return true;
+    
+    const searchTerm = query.toLowerCase().trim();
+    const venueInfo = getVenueInfo(event.location);
+    
+    // Search in event details
+    const titleMatch = event.title.toLowerCase().includes(searchTerm);
+    const descriptionMatch = event.description.toLowerCase().includes(searchTerm);
+    const categoryMatch = event.category?.toLowerCase().includes(searchTerm) || false;
+    
+    // Search in venue details
+    const venueNameMatch = venueInfo?.venue?.name?.toLowerCase().includes(searchTerm) || false;
+    const venueCityMatch = venueInfo?.venue?.city?.toLowerCase().includes(searchTerm) || false;
+    const venueCountryMatch = venueInfo?.venue?.country?.toLowerCase().includes(searchTerm) || false;
+    const venueStateMatch = venueInfo?.venue?.state?.toLowerCase().includes(searchTerm) || false;
+    
+    // Search in ticket types
+    const ticketTypeMatch = event.ticketTypes?.some(ticket => 
+      ticket.name.toLowerCase().includes(searchTerm)
+    ) || false;
+
+    // Search in status
+    const statusMatch = event.status.toLowerCase().includes(searchTerm);
+
+    return titleMatch || 
+           descriptionMatch || 
+           categoryMatch || 
+           venueNameMatch || 
+           venueCityMatch || 
+           venueCountryMatch || 
+           venueStateMatch || 
+           ticketTypeMatch ||
+           statusMatch;
+  };
+
   const filteredEvents = events
     .filter(event => {
-      const venueInfo = getVenueInfo(event.location);
-      const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (venueInfo?.venue?.city || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (venueInfo?.venue?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          false;
+      const matchesSearch = matchesSearchQuery(event, searchQuery);
       
       const now = new Date();
       const eventStart = new Date(event.date);
