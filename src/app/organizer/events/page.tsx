@@ -342,10 +342,19 @@ export default function OrganizerEventsPage() {
                       alt={event.title}
                       className="w-full h-48 object-cover"
                     />
-                    <div className="absolute top-4 right-4">
+                    <div className="absolute top-4 right-4 flex items-center gap-2">
                       <div className={`badge ${getEventStatus(event)} badge-lg`}>
                         {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                       </div>
+                      {event.status === 'draft' && (
+                        <div className="tooltip tooltip-left" data-tip="This event is private and must be activated to be displayed on the public">
+                          <div className="badge badge-ghost badge-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </figure>
                   <div className="card-body">
