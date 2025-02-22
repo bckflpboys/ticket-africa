@@ -24,16 +24,16 @@ interface Event {
   date: string;
   endTime: string;
   images: string[];
-  status: 'draft' | 'published' | 'cancelled' | 'active';
+  status: 'draft' | 'active' | 'cancelled';
   location: string; // This is a JSON string
+  category: string;
   ticketTypes?: {
     _id: string;
     name: string;
     price: number;
     quantity: number;
-    quantitySold?: number;
+    quantitySold: number;
   }[];
-  category?: string;
 }
 
 interface VenueInfo {
@@ -167,69 +167,68 @@ export default function OrganizerEventsPage() {
     return `${formattedDate} at ${formattedTime}`;
   };
 
-  const matchesSearchQuery = (event: Event, query: string) => {
-    if (!query) return true;
-    
-    const searchTerm = query.toLowerCase().trim();
-    const venueInfo = getVenueInfo(event.location);
-    
-    // Search in event details
-    const titleMatch = event.title.toLowerCase().includes(searchTerm);
-    const descriptionMatch = event.description.toLowerCase().includes(searchTerm);
-    const categoryMatch = event.category?.toLowerCase().includes(searchTerm) || false;
-    
-    // Search in venue details
-    const venueNameMatch = venueInfo?.venue?.name?.toLowerCase().includes(searchTerm) || false;
-    const venueCityMatch = venueInfo?.venue?.city?.toLowerCase().includes(searchTerm) || false;
-    const venueCountryMatch = venueInfo?.venue?.country?.toLowerCase().includes(searchTerm) || false;
-    const venueStateMatch = venueInfo?.venue?.state?.toLowerCase().includes(searchTerm) || false;
-    
-    // Search in ticket types
-    const ticketTypeMatch = event.ticketTypes?.some(ticket => 
-      ticket.name.toLowerCase().includes(searchTerm)
-    ) || false;
-
-    // Search in status
-    const statusMatch = event.status.toLowerCase().includes(searchTerm);
-
-    return titleMatch || 
-           descriptionMatch || 
-           categoryMatch || 
-           venueNameMatch || 
-           venueCityMatch || 
-           venueCountryMatch || 
-           venueStateMatch || 
-           ticketTypeMatch ||
-           statusMatch;
-  };
-
   const filteredEvents = events
     .filter(event => {
-      const matchesSearch = matchesSearchQuery(event, searchQuery);
-      
       const now = new Date();
-      const eventStart = new Date(event.date);
-      const eventEnd = new Date(event.endTime);
+      const endDate = new Date(event.endTime);
       
+      // Debug log for active filter
+      if (filter === 'active') {
+        console.log('Event:', {
+          id: event._id,
+          title: event.title,
+          status: event.status,
+          endTime: event.endTime,
+          isActive: event.status === 'active'
+        });
+      }
+      
+      // First apply status/time-based filters
       switch (filter) {
         case 'active':
-          return matchesSearch && eventEnd >= now && event.status === 'published';
+          // Show all active events that haven't ended
+          return event.status === 'active';
         case 'draft':
-          return matchesSearch && event.status === 'draft';
+          return event.status === 'draft';
         case 'past':
-          return matchesSearch && eventEnd < now;
+          // Only check end date if it's a valid date
+          return !isNaN(endDate.getTime()) && endDate < now;
         default:
-          return matchesSearch;
+          return true;
       }
+    })
+    .filter(event => {
+      if (!searchQuery) return true;
+      
+      const searchLower = searchQuery.toLowerCase();
+      const location = JSON.parse(event.location);
+      
+      // Search in event fields
+      return (
+        event.title.toLowerCase().includes(searchLower) ||
+        event.description.toLowerCase().includes(searchLower) ||
+        (event.category && event.category.toLowerCase().includes(searchLower)) ||
+        // Search in location
+        location.venue.name.toLowerCase().includes(searchLower) ||
+        location.venue.city.toLowerCase().includes(searchLower) ||
+        location.venue.state.toLowerCase().includes(searchLower) ||
+        location.venue.country.toLowerCase().includes(searchLower) ||
+        // Search in ticket types
+        event.ticketTypes?.some(ticket => 
+          ticket.name.toLowerCase().includes(searchLower)
+        )
+      );
     })
     .sort((a, b) => {
       switch (sortBy) {
+        case 'date':
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
         case 'title':
           return a.title.localeCompare(b.title);
         case 'status':
           return a.status.localeCompare(b.status);
         default:
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          return 0;
       }
     });
 
