@@ -71,6 +71,44 @@ interface TicketType {
   quantity: number;
 }
 
+// Helper function to convert 12-hour format to 24-hour format
+const convertTo24Hour = (time: string, period: 'AM' | 'PM'): string => {
+  const [hours, minutes] = time.split(':');
+  let hour = parseInt(hours, 10);
+  
+  if (period === 'PM' && hour !== 12) {
+    hour += 12;
+  } else if (period === 'AM' && hour === 12) {
+    hour = 0;
+  }
+  
+  return `${hour.toString().padStart(2, '0')}:${minutes}`;
+};
+
+// Helper function to convert 24-hour format to 12-hour format
+const convertTo12Hour = (time: string): { time: string; period: 'AM' | 'PM' } => {
+  const [hours, minutes] = time.split(':');
+  let hour = parseInt(hours, 10);
+  let period: 'AM' | 'PM' = hour >= 12 ? 'PM' : 'AM';
+  
+  if (hour > 12) {
+    hour -= 12;
+  } else if (hour === 0) {
+    hour = 12;
+  }
+  
+  return { 
+    time: `${hour}:${minutes}`, 
+    period 
+  };
+};
+
+// Helper function to ensure time is in HH:MM format
+const formatTimeToHHMM = (time: string): string => {
+  const [hours, minutes] = time.split(':');
+  return `${hours.padStart(2, '0')}:${minutes}`;
+};
+
 export default function CreateEvent() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -124,47 +162,35 @@ export default function CreateEvent() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
-    if (name.startsWith('restrictions.')) {
+    if (name === 'startTime' || name === 'endTime') {
+      // For time inputs, store in 24-hour format
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    } else if (name.startsWith('restrictions.')) {
       const [, restrictionField, subfield] = name.split('.') as [string, keyof EventRestrictions, string | undefined];
       
       setFormData((prev) => {
         const newRestrictions = { ...prev.restrictions };
-
         if (subfield) {
-          // Handle nested fields (like ageRestriction.hasAgeLimit)
           if (restrictionField === 'ageRestriction') {
             newRestrictions.ageRestriction = {
               ...newRestrictions.ageRestriction,
-              [subfield]: type === 'checkbox' 
-                ? (e.target as HTMLInputElement).checked 
-                : subfield === 'minimumAge' 
-                  ? Number(value) 
-                  : value
+              [subfield]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
             };
           } else if (restrictionField === 'coolerBox') {
             newRestrictions.coolerBox = {
               ...newRestrictions.coolerBox,
-              [subfield]: type === 'checkbox' 
-                ? (e.target as HTMLInputElement).checked 
-                : subfield === 'maxLiters' 
-                  ? Number(value) 
-                  : subfield === 'price' 
-                    ? Number(value) 
-                    : value
+              [subfield]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
+                         subfield === 'maxLiters' || subfield === 'price' ? Number(value) : value
             };
           }
         } else {
-          // Handle top-level boolean fields
-          if (
-            restrictionField === 'noWeapons' ||
-            restrictionField === 'noProfessionalCameras' ||
-            restrictionField === 'noPets' ||
-            restrictionField === 'hasCustomRestrictions'
-          ) {
-            newRestrictions[restrictionField] = (e.target as HTMLInputElement).checked;
-          }
+          (newRestrictions[restrictionField] as any) = type === 'checkbox' 
+            ? (e.target as HTMLInputElement).checked 
+            : value;
         }
-
         return {
           ...prev,
           restrictions: newRestrictions
@@ -265,12 +291,21 @@ export default function CreateEvent() {
   };
 
   const updateScheduleItem = (index: number, field: keyof EventScheduleItem, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      schedule: prev.schedule.map((item, i) => 
-        i === index ? { ...item, [field]: field === 'period' ? value as 'AM' | 'PM' : value } : item
-      )
-    }));
+    const newSchedule = [...formData.schedule];
+    if (field === 'time') {
+      // When time changes, we need to ensure it's in the correct format for the input
+      const timeValue = value.replace(/^(\d):/, '0$1:'); // Ensure single-digit hours are padded
+      newSchedule[index] = {
+        ...newSchedule[index],
+        [field]: timeValue
+      };
+    } else {
+      newSchedule[index] = {
+        ...newSchedule[index],
+        [field]: value
+      };
+    }
+    setFormData({ ...formData, schedule: newSchedule });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -314,53 +349,60 @@ export default function CreateEvent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
+    setError('');
 
     try {
-      if (!session?.user) {
-        throw new Error('You must be logged in to create an event');
-      }
-
-      let uploadedImageUrls: string[] = [];
+      // Upload images first
+      const uploadedImageUrls: string[] = [];
       
-      if (selectedImages.length > 0) {
+      for (const image of selectedImages) {
+        const formData = new FormData();
+        formData.append('file', image);
+        
         try {
-          // Upload all images
-          const uploadPromises = selectedImages.map(async (file) => {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-              const uploadResponse = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData,
-              });
-
-              if (!uploadResponse.ok) {
-                const errorData = await uploadResponse.json();
-                console.error(`Upload failed for ${file.name}:`, errorData.error || 'Unknown error');
-                return null;
-              }
-
-              const uploadResult = await uploadResponse.json();
-              return uploadResult.url;
-            } catch (error) {
-              console.error(`Upload failed for ${file.name}:`, error);
-              return null;
-            }
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
           });
 
-          uploadedImageUrls = (await Promise.all(uploadPromises)).filter(url => url !== null);
-          
-          if (uploadedImageUrls.length === 0) {
-            throw new Error('No images were successfully uploaded. Please try again.');
+          if (!uploadResponse.ok) {
+            throw new Error(`Failed to upload image: ${await uploadResponse.text()}`);
           }
+
+          const { url } = await uploadResponse.json();
+          uploadedImageUrls.push(url);
         } catch (uploadError) {
-          console.error('Image upload error:', uploadError);
+          console.error(`Upload failed for ${image.name}:`, uploadError);
           throw new Error('Failed to upload images. Please try again.');
         }
       }
+
+      // Format schedule times to ensure HH:MM format
+      const formattedSchedule = formData.schedule.map(item => ({
+        ...item,
+        time: formatTimeToHHMM(item.time)
+      }));
+
+      // Ensure boolean values are properly set
+      const formattedRestrictions = {
+        ...formData.restrictions,
+        ageRestriction: {
+          ...formData.restrictions.ageRestriction,
+          hasAgeLimit: Boolean(formData.restrictions.ageRestriction.hasAgeLimit),
+          minimumAge: Number(formData.restrictions.ageRestriction.minimumAge)
+        },
+        noWeapons: Boolean(formData.restrictions.noWeapons),
+        noProfessionalCameras: Boolean(formData.restrictions.noProfessionalCameras),
+        noPets: Boolean(formData.restrictions.noPets),
+        hasCustomRestrictions: Boolean(formData.restrictions.hasCustomRestrictions),
+        coolerBox: {
+          ...formData.restrictions.coolerBox,
+          allowed: Boolean(formData.restrictions.coolerBox.allowed),
+          maxLiters: Number(formData.restrictions.coolerBox.maxLiters),
+          price: Number(formData.restrictions.coolerBox.price)
+        }
+      };
 
       const response = await fetch('/api/events', {
         method: 'POST',
@@ -369,6 +411,8 @@ export default function CreateEvent() {
         },
         body: JSON.stringify({
           ...formData,
+          schedule: formattedSchedule,
+          restrictions: formattedRestrictions,
           date: new Date(`${formData.date}T${formData.startTime}`).toISOString(),
           endTime: new Date(`${formData.date}T${formData.endTime}`).toISOString(),
           images: uploadedImageUrls,
@@ -376,7 +420,6 @@ export default function CreateEvent() {
           tags: formData.tags.split(',').map(tag => tag.trim()),
         }),
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.details || errorData.error || 'Failed to create event');
@@ -636,9 +679,9 @@ export default function CreateEvent() {
 
                 <div className="space-y-6">
                   {/* Timeline Display */}
-                  <div className="relative">
+                  <div className="relative space-y-6">
                     {formData.schedule.map((scheduleItem, index) => (
-                      <div key={index} className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-300 mb-6 border-2 border-base-content/50">
+                      <div key={index} className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow border-2 border-base-content/50">
                         <div className="card-body relative">
                           {/* Timeline Connector */}
                           {index < formData.schedule.length - 1 && (
@@ -655,8 +698,13 @@ export default function CreateEvent() {
                                 <div className="flex items-center gap-2">
                                   <input
                                     type="time"
-                                    value={scheduleItem.time}
-                                    onChange={(e) => updateScheduleItem(index, 'time', e.target.value)}
+                                    value={convertTo24Hour(scheduleItem.time, scheduleItem.period)}
+                                    onChange={(e) => {
+                                      const { time, period } = convertTo12Hour(e.target.value);
+                                      const newSchedule = [...formData.schedule];
+                                      newSchedule[index] = { ...scheduleItem, time, period };
+                                      setFormData({ ...formData, schedule: newSchedule });
+                                    }}
                                     className="input input-bordered w-36"
                                     required
                                   />
@@ -839,7 +887,7 @@ export default function CreateEvent() {
                 <div className="flex items-center gap-2 mb-6">
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0-6h6m-6 0H6a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2H6z" />
                     </svg>
                   </div>
                   <h2 className="card-title text-xl">Ticket Types</h2>
@@ -918,7 +966,7 @@ export default function CreateEvent() {
                 <div className="flex items-center gap-2 mb-6">
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 4v2m0-6h6m-6 0H6a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2H6z" />
                     </svg>
                   </div>
                   <h2 className="card-title text-xl">Event Rules & Restrictions</h2>
