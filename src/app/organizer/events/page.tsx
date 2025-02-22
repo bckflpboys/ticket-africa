@@ -66,6 +66,9 @@ export default function OrganizerEventsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all'); // all, active, draft, past
   const [sortBy, setSortBy] = useState('date'); // date, title, status
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchEvents = async () => {
     try {
@@ -292,6 +295,42 @@ export default function OrganizerEventsPage() {
     }
   };
 
+  const openDeleteModal = (eventId: string) => {
+    setEventToDelete(eventId);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setEventToDelete(null);
+    setDeleteModalOpen(false);
+  };
+
+  const deleteEvent = async () => {
+    if (!eventToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/organizer/events/${eventToDelete}/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete event');
+      }
+
+      // Update the events list locally
+      setEvents(events.filter(event => event._id !== eventToDelete));
+      closeDeleteModal();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -457,8 +496,16 @@ export default function OrganizerEventsPage() {
                         <a href={`/events/${event._id}/edit`} className="btn btn-ghost btn-sm">
                           <Edit className="w-4 h-4" />
                         </a>
-                        <button className="btn btn-ghost btn-sm text-error">
-                          <Trash2 className="w-4 h-4" />
+                        <button 
+                          onClick={() => openDeleteModal(event._id)}
+                          className="btn btn-ghost btn-sm text-error hover:bg-error hover:text-white"
+                          disabled={isDeleting && eventToDelete === event._id}
+                        >
+                          {isDeleting && eventToDelete === event._id ? (
+                            <span className="loading loading-spinner loading-sm"></span>
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -469,6 +516,41 @@ export default function OrganizerEventsPage() {
           )}
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Delete Event</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this event? This action cannot be undone and will remove all associated images and ticket information.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={closeDeleteModal}
+                className="btn btn-ghost"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteEvent}
+                className="btn btn-error"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Event'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
