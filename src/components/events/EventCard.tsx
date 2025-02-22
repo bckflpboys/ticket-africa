@@ -48,9 +48,16 @@ const EventCard = ({
   const displayLocation = React.useMemo(() => {
     try {
       const locationData = JSON.parse(location);
-      return `${locationData.venue.city}, ${locationData.venue.country}`;
+      return {
+        venueName: locationData.venue.name,
+        address: `${locationData.venue.city}${locationData.venue.state ? `, ${locationData.venue.state}` : ''}${locationData.venue.country ? `, ${locationData.venue.country}` : ''}`
+      };
     } catch {
-      return location;
+      // If location is not JSON, treat it as the venue name
+      return {
+        venueName: location,
+        address: ''
+      };
     }
   }, [location]);
 
@@ -110,12 +117,19 @@ const EventCard = ({
             </div>
 
             {/* Location - Full Width */}
-            <div className="flex items-center gap-1.5 text-gray-600 col-span-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span className="truncate">{displayLocation}</span>
+            <div className="flex flex-col gap-1 text-gray-600 col-span-2">
+              <div className="flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="font-medium truncate">{displayLocation.venueName}</span>
+              </div>
+              {displayLocation.address && (
+                <span className="text-sm text-gray-500 pl-5 truncate">
+                  {displayLocation.address}
+                </span>
+              )}
             </div>
           </div>
         </div>
