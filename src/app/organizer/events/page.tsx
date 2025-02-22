@@ -252,6 +252,22 @@ export default function OrganizerEventsPage() {
     return tickets.reduce((total, ticket) => total + ticket.quantity, 0);
   };
 
+  const getTotalRevenue = (tickets: Event['ticketTypes']) => {
+    if (!tickets || !Array.isArray(tickets)) return 0;
+    return tickets.reduce((total, ticket) => {
+      const soldRevenue = (ticket.quantitySold || 0) * ticket.price;
+      const potentialRevenue = (ticket.quantity - (ticket.quantitySold || 0)) * ticket.price;
+      return total + soldRevenue + potentialRevenue;
+    }, 0);
+  };
+
+  const getCurrentRevenue = (tickets: Event['ticketTypes']) => {
+    if (!tickets || !Array.isArray(tickets)) return 0;
+    return tickets.reduce((total, ticket) => {
+      return total + (ticket.quantitySold || 0) * ticket.price;
+    }, 0);
+  };
+
   return (
     <>
       <Navbar />
@@ -374,6 +390,22 @@ export default function OrganizerEventsPage() {
                           </div>
                         </div>
                       ))}
+                    </div>
+
+                    {/* Revenue Information */}
+                    <div className="space-y-2 mt-2 border-t pt-2">
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm font-medium text-base-content/70">Current Revenue:</div>
+                        <div className="text-sm font-semibold text-success">
+                          R {getCurrentRevenue(event.ticketTypes).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm font-medium text-base-content/70">Expected Revenue:</div>
+                        <div className="text-sm font-semibold text-primary">
+                          R {getTotalRevenue(event.ticketTypes).toLocaleString()}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="card-actions justify-end mt-4">
