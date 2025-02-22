@@ -7,7 +7,7 @@ interface TicketItem {
   id: string;
   eventId: string;
   eventName: string;
-  ticketType: 'regular' | 'vip' | 'vvip';
+  ticketType: string;
   quantity: number;
   price: number;
   imageUrl?: string;

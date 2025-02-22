@@ -27,46 +27,75 @@ interface EventRestrictions {
 }
 
 interface EventLocation {
-  address: string;
-  city: string;
-  country: string;
-  mapUrl: string;
+  venue: {
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    country: string;
+  };
+  transport: {
+    directions: string;
+  };
+  facilities: {
+    wheelchair: boolean;
+    atm: boolean;
+    foodCourt: boolean;
+    parking: boolean;
+  };
+  additionalInfo: string;
 }
 
 interface EventScheduleItem {
   time: string;
+  period: string;
   title: string;
   description: string;
+  _id: string;
 }
 
 interface EventHighlight {
   title: string;
-  description?: string;
+  description: string;
+  _id: string;
+}
+
+interface TicketType {
+  name: string;
+  price: number;
+  quantity: number;
+  quantitySold: number;
+  _id: string;
 }
 
 interface Event {
   _id: string;
-  name: string;
+  title: string;
   description: string;
   date: string;
+  endTime: string;
+  location: string; // This is a JSON string that needs to be parsed
   images: string[];
-  highlights: EventHighlight[];
+  organizer: string;
+  ticketTypes: TicketType[];
+  status: string;
+  category: string;
+  tags: string[];
+  coolerBoxPass: boolean;
+  coolerBoxLiters: number;
   restrictions: EventRestrictions;
-  location: EventLocation;
+  highlights: EventHighlight[];
   schedule: EventScheduleItem[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface TicketCounts {
-  regular: number;
-  vip: number;
-  vvip: number;
+  [key: string]: number;
 }
 
 interface TicketPrices {
-  regular: number;
-  vip: number;
-  vvip: number;
-  coolerBox: number;
+  [key: string]: number;
 }
 
 export default function EventDetails() {
@@ -76,14 +105,12 @@ export default function EventDetails() {
   const { showToast } = useToast();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [parsedLocation, setParsedLocation] = useState<EventLocation | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
-  const [tickets, setTickets] = useState<TicketCounts>({
-    regular: 0,
-    vip: 0,
-    vvip: 0
-  });
+  const [tickets, setTickets] = useState<TicketCounts>({});
+  const [ticketPrices, setTicketPrices] = useState<TicketPrices>({});
   const [coolerBoxPass, setCoolerBoxPass] = useState(false);
 
   useEffect(() => {
@@ -95,6 +122,15 @@ export default function EventDetails() {
         }
         const data = await response.json();
         setEvent(data);
+        // Parse the location JSON string
+        if (data.location) {
+          try {
+            const locationData = JSON.parse(data.location);
+            setParsedLocation(locationData);
+          } catch (e) {
+            console.error('Error parsing location data:', e);
+          }
+        }
       } catch (err) {
         setError('Failed to load event details');
         console.error('Error fetching event:', err);
@@ -106,6 +142,22 @@ export default function EventDetails() {
     fetchEvent();
   }, [id]);
 
+  useEffect(() => {
+    if (event?.ticketTypes) {
+      // Initialize ticket counts
+      const initialCounts: TicketCounts = {};
+      const prices: TicketPrices = {};
+      
+      event.ticketTypes.forEach(ticket => {
+        initialCounts[ticket.name] = 0;
+        prices[ticket.name] = ticket.price;
+      });
+      
+      setTickets(initialCounts);
+      setTicketPrices(prices);
+    }
+  }, [event]);
+
   const images = event?.images || [
     "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop",
@@ -113,21 +165,29 @@ export default function EventDetails() {
     "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2070&auto=format&fit=crop"
   ];
 
-  const ticketPrices: TicketPrices = {
-    regular: 350,
-    vip: 750,
-    vvip: 1500,
-    coolerBox: 100
-  };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
-      currency: 'ZAR'
+      currency: 'ZAR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(price);
   };
 
-  const updateTicketCount = (type: keyof TicketCounts, increment: boolean) => {
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-ZA', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(date);
+  };
+
+  const updateTicketCount = (type: string, increment: boolean) => {
     setTickets(prev => ({
       ...prev,
       [type]: increment ? prev[type] + 1 : Math.max(0, prev[type] - 1)
@@ -158,10 +218,10 @@ export default function EventDetails() {
       if (quantity > 0) {
         addTicket({
           eventId: id,
-          eventName: event?.name || '',
-          ticketType: type as keyof TicketCounts,
+          eventName: event?.title || '',
+          ticketType: type,
           quantity: quantity,
-          price: ticketPrices[type as keyof TicketPrices],
+          price: ticketPrices[type],
           imageUrl: images[0]
         });
       }
@@ -171,17 +231,13 @@ export default function EventDetails() {
     if (coolerBoxPass) {
       addCoolerBox({
         eventId: id,
-        eventName: event?.name || '',
-        price: ticketPrices.coolerBox
+        eventName: event?.title || '',
+        price: 100
       });
     }
     
     // Reset tickets and cooler box after adding to cart
-    setTickets({
-      regular: 0,
-      vip: 0,
-      vvip: 0
-    });
+    setTickets({});
     setCoolerBoxPass(false);
     
     showToast('Added to cart successfully!', 'success');
@@ -238,7 +294,7 @@ export default function EventDetails() {
               <ul>
                 <li><Link href="/">Home</Link></li>
                 <li><Link href="/events">Events</Link></li>
-                <li>Event Details</li>
+                <li>{event.title}</li>
               </ul>
             </div>
           </div>
@@ -248,75 +304,56 @@ export default function EventDetails() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Image Section */}
             <div className="lg:col-span-2">
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg">
-                {/* Previous Button */}
-                <button 
-                  onClick={prevImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/40"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-
-                {/* Next Button */}
-                <button 
-                  onClick={nextImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/40"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-
-                {/* Image */}
+              <div className="relative w-full aspect-[2/1] overflow-hidden rounded-t-box">
                 <Image
                   src={images[currentImage]}
-                  alt="Event Image"
+                  alt="Event banner"
                   fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
-                  className="object-cover transition-all duration-500"
-                  priority={currentImage === 0}
+                  className="object-cover transition-all duration-300"
+                  priority
                   onError={(e) => {
-                    // Fallback to a default image if loading fails
                     const target = e.target as HTMLImageElement;
                     target.src = "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop";
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-
-                {/* Dots Navigation */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-                  {images.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImage(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        currentImage === index 
-                          ? 'bg-white w-4' 
-                          : 'bg-white/50 hover:bg-white/80'
-                      }`}
-                    />
-                  ))}
+                
+                {/* Navigation Buttons */}
+                <div className="absolute inset-0 flex items-center justify-between px-4 pointer-events-none">
+                  <button 
+                    onClick={() => setCurrentImage(prev => (prev === 0 ? images.length - 1 : prev - 1))}
+                    className="btn btn-circle btn-sm bg-black/50 hover:bg-black/70 border-0 text-white pointer-events-auto"
+                    aria-label="Previous image"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={() => setCurrentImage(prev => (prev === images.length - 1 ? 0 : prev + 1))}
+                    className="btn btn-circle btn-sm bg-black/50 hover:bg-black/70 border-0 text-white pointer-events-auto"
+                    aria-label="Next image"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="badge badge-primary">Music</span>
-                    <span className="badge badge-ghost">Featured</span>
+                    <span className="badge badge-primary">{event.category}</span>
                   </div>
-                  <h1 className="text-3xl font-bold mb-2">{event.name}</h1>
-                  <p className="text-white/80">{event.description}</p>
+                  <h1 className="text-3xl font-bold">{event.title}</h1>
                 </div>
               </div>
 
               {/* Thumbnail Gallery */}
-              <div className="grid grid-cols-4 gap-2 mt-2">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(calc(100% / 6), 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
                 {event.images.map((image, index) => (
                   <button
                     key={image}
                     onClick={() => setCurrentImage(index)}
-                    className={`relative aspect-[4/3] overflow-hidden rounded-md ${
+                    className={`relative aspect-[2/1] overflow-hidden rounded-md ${
                       currentImage === index ? 'ring-2 ring-primary' : ''
                     }`}
                   >
@@ -324,7 +361,7 @@ export default function EventDetails() {
                       src={image}
                       alt={`Event Image ${index + 1}`}
                       fill
-                      sizes="(max-width: 768px) 25vw, 20vw"
+                      sizes="16.67vw"
                       className="object-cover"
                       priority={index === 0}
                       onError={(e) => {
@@ -360,11 +397,17 @@ export default function EventDetails() {
                 </div>
                 <div className="mt-4 p-4 bg-base-200 rounded-lg border-2 border-base-300">
                   {activeTab === 'overview' && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4">Event Description</h3>
-                      <p className="text-base-content/80 leading-relaxed">
-                        {event.description}
-                      </p>
+                    <div className="space-y-8">
+                      {/* Description */}
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">About this event</h3>
+                        <p className="text-base-content/80 whitespace-pre-wrap">{event.description}</p>
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          {event.tags.map((tag, index) => (
+                            <span key={index} className="badge badge-outline">{tag}</span>
+                          ))}
+                        </div>
+                      </div>
                       
                       <div className="divider"></div>
                       
@@ -377,9 +420,7 @@ export default function EventDetails() {
                             </svg>
                             <div>
                               <span className="font-medium">{highlight.title}</span>
-                              {highlight.description && (
-                                <p className="text-sm text-base-content/70">{highlight.description}</p>
-                              )}
+                              <p className="text-sm text-base-content/70">{highlight.description}</p>
                             </div>
                           </li>
                         ))}
@@ -514,9 +555,10 @@ export default function EventDetails() {
                             </svg>
                             <div>
                               <h4 className="font-medium">Venue Address</h4>
-                              <p className="text-sm text-base-content/70">{event.location.address}</p>
-                              <p className="text-sm text-base-content/70">{event.location.city}</p>
-                              <p className="text-sm text-base-content/70">{event.location.country}</p>
+                              <p className="text-sm text-base-content/70">{parsedLocation?.venue?.address}</p>
+                              <p className="text-sm text-base-content/70">{parsedLocation?.venue?.city}</p>
+                              <p className="text-sm text-base-content/70">{parsedLocation?.venue?.state}</p>
+                              <p className="text-sm text-base-content/70">{parsedLocation?.venue?.country}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -525,11 +567,7 @@ export default function EventDetails() {
                             </svg>
                             <div>
                               <h4 className="font-medium">Getting There</h4>
-                              <ul className="text-sm text-base-content/70 space-y-2 mt-2">
-                                <li>• 15 minutes from Murtala Muhammed Airport</li>
-                                <li>• 5 minutes from Victoria Island Bus Station</li>
-                                <li>• Parking available on-site</li>
-                              </ul>
+                              <p className="text-sm text-base-content/70 mt-2">{parsedLocation?.transport?.directions}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -537,24 +575,26 @@ export default function EventDetails() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <div>
-                              <h4 className="font-medium">Additional Information</h4>
+                              <h4 className="font-medium">Facilities</h4>
                               <ul className="text-sm text-base-content/70 space-y-2 mt-2">
-                                <li>• Wheelchair accessible</li>
-                                <li>• ATM machines available</li>
-                                <li>• Food courts nearby</li>
+                                {parsedLocation?.facilities?.wheelchair && (
+                                  <li>• Wheelchair accessible</li>
+                                )}
+                                {parsedLocation?.facilities?.atm && (
+                                  <li>• ATM machines available</li>
+                                )}
+                                {parsedLocation?.facilities?.foodCourt && (
+                                  <li>• Food courts available</li>
+                                )}
+                                {parsedLocation?.facilities?.parking && (
+                                  <li>• Parking available</li>
+                                )}
                               </ul>
+                              {parsedLocation?.additionalInfo && (
+                                <p className="text-sm text-base-content/70 mt-2">{parsedLocation?.additionalInfo}</p>
+                              )}
                             </div>
                           </div>
-                        </div>
-                        <div className="h-[300px] rounded-lg overflow-hidden">
-                          <iframe 
-                            src={event.location.mapUrl} 
-                            width="100%" 
-                            height="100%" 
-                            style={{ border: 0 }} 
-                            allowFullScreen 
-                            loading="lazy"
-                          ></iframe>
                         </div>
                       </div>
                     </div>
@@ -578,8 +618,8 @@ export default function EventDetails() {
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm text-base-content/70">Date</p>
-                          <p className="font-medium">{event.date}</p>
+                          <p className="text-sm text-base-content/70">Date and Time</p>
+                          <p className="font-medium">{formatDateTime(event.date)}</p>
                         </div>
                       </div>
 
@@ -592,7 +632,7 @@ export default function EventDetails() {
                         </div>
                         <div>
                           <p className="text-sm text-base-content/70">Location</p>
-                          <p className="font-medium">{event.location.address}</p>
+                          <p className="font-medium">{parsedLocation?.venue?.address}</p>
                         </div>
                       </div>
 
@@ -604,151 +644,82 @@ export default function EventDetails() {
                           <span className="badge badge-success">Available</span>
                         </div>
 
-                        {/* Regular Ticket */}
-                        <div className="p-4 bg-base-200 rounded-lg space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-medium">Regular Ticket</h4>
-                              <p className="text-sm text-base-content/70">General admission</p>
-                              <p className="text-primary font-medium mt-1">{formatPrice(ticketPrices.regular)}</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <button 
-                                onClick={() => updateTicketCount('regular', false)}
-                                className="btn btn-circle btn-sm btn-outline"
-                                disabled={tickets.regular === 0}
-                              >
-                                -
-                              </button>
-                              <span className="w-8 text-center">{tickets.regular}</span>
-                              <button 
-                                onClick={() => updateTicketCount('regular', true)}
-                                className="btn btn-circle btn-sm btn-outline"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* VIP Ticket */}
-                        <div className="p-4 bg-base-200 rounded-lg space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium">VIP Ticket</h4>
-                                <span className="badge badge-primary badge-sm">POPULAR</span>
+                        {/* Ticket Types */}
+                        {event.ticketTypes.map((ticketType) => (
+                          <div key={ticketType._id} className="p-4 bg-base-200 rounded-lg space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">{ticketType.name}</h4>
+                                <p className="text-sm text-base-content/70">
+                                  {ticketType.quantity - ticketType.quantitySold} tickets remaining
+                                </p>
+                                <p className="text-primary font-medium mt-1">{formatPrice(ticketType.price)}</p>
                               </div>
-                              <p className="text-sm text-base-content/70">Premium seating & complimentary drinks</p>
-                              <p className="text-primary font-medium mt-1">{formatPrice(ticketPrices.vip)}</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <button 
-                                onClick={() => updateTicketCount('vip', false)}
-                                className="btn btn-circle btn-sm btn-outline"
-                                disabled={tickets.vip === 0}
-                              >
-                                -
-                              </button>
-                              <span className="w-8 text-center">{tickets.vip}</span>
-                              <button 
-                                onClick={() => updateTicketCount('vip', true)}
-                                className="btn btn-circle btn-sm btn-outline"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* VVIP Ticket */}
-                        <div className="p-4 bg-base-200 rounded-lg space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-medium">VVIP Ticket</h4>
-                              <p className="text-sm text-base-content/70">Exclusive access & full service</p>
-                              <p className="text-primary font-medium mt-1">{formatPrice(ticketPrices.vvip)}</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <button 
-                                onClick={() => updateTicketCount('vvip', false)}
-                                className="btn btn-circle btn-sm btn-outline"
-                                disabled={tickets.vvip === 0}
-                              >
-                                -
-                              </button>
-                              <span className="w-8 text-center">{tickets.vvip}</span>
-                              <button 
-                                onClick={() => updateTicketCount('vvip', true)}
-                                className="btn btn-circle btn-sm btn-outline"
-                              >
-                                +
-                              </button>
+                              <div className="flex items-center gap-3">
+                                <button 
+                                  onClick={() => updateTicketCount(ticketType.name, false)}
+                                  className="btn btn-circle btn-sm btn-outline"
+                                  disabled={tickets[ticketType.name] === 0}
+                                >
+                                  -
+                                </button>
+                                <span className="w-8 text-center">{tickets[ticketType.name] || 0}</span>
+                                <button 
+                                  onClick={() => updateTicketCount(ticketType.name, true)}
+                                  className="btn btn-circle btn-sm btn-outline"
+                                  disabled={tickets[ticketType.name] >= (ticketType.quantity - ticketType.quantitySold)}
+                                >
+                                  +
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        ))}
 
                         {/* Cooler Box Pass */}
-                        <div className="p-4 bg-base-200 rounded-lg space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium">Cooler Box Pass</h4>
-                                <span className="badge badge-accent badge-sm">OPTIONAL</span>
+                        {event.coolerBoxPass && (
+                          <div className="p-4 bg-base-200 rounded-lg space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-medium">Cooler Box Pass</h4>
+                                  <span className="badge badge-accent badge-sm">OPTIONAL</span>
+                                </div>
+                                <p className="text-sm text-base-content/70">Bring your own drinks (max {event.coolerBoxLiters}L)</p>
+                                <p className="text-primary font-medium mt-1">{formatPrice(100)}</p>
                               </div>
-                              <p className="text-sm text-base-content/70">Bring your own drinks (max 50L)</p>
-                              <p className="text-primary font-medium mt-1">{formatPrice(ticketPrices.coolerBox)}</p>
-                            </div>
-                            <div>
-                              <input 
-                                type="checkbox" 
-                                className="toggle toggle-primary" 
-                                checked={coolerBoxPass}
-                                onChange={toggleCoolerBoxPass}
-                              />
+                              <div>
+                                <input 
+                                  type="checkbox"
+                                  className="toggle toggle-primary"
+                                  checked={coolerBoxPass}
+                                  onChange={(e) => setCoolerBoxPass(e.target.checked)}
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        )}
 
-                        {/* Order Summary */}
                         <div className="divider"></div>
                         <div className="space-y-4">
                           <h3 className="font-medium">Order Summary</h3>
-                          {tickets.regular > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Regular Ticket × {tickets.regular}</span>
-                              <span>{formatPrice(tickets.regular * ticketPrices.regular)}</span>
+                          {Object.entries(tickets).map(([type, quantity]) => quantity > 0 && (
+                            <div key={type} className="flex justify-between text-sm">
+                              <span>{type} × {quantity}</span>
+                              <span>{formatPrice(quantity * ticketPrices[type])}</span>
                             </div>
-                          )}
-                          {tickets.vip > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>VIP Ticket × {tickets.vip}</span>
-                              <span>{formatPrice(tickets.vip * ticketPrices.vip)}</span>
-                            </div>
-                          )}
-                          {tickets.vvip > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>VVIP Ticket × {tickets.vvip}</span>
-                              <span>{formatPrice(tickets.vvip * ticketPrices.vvip)}</span>
-                            </div>
-                          )}
-                          {coolerBoxPass && (
-                            <div className="flex justify-between text-sm">
-                              <span>Cooler Box Pass</span>
-                              <span>{formatPrice(ticketPrices.coolerBox)}</span>
-                            </div>
-                          )}
+                          ))}
                           <div className="flex justify-between text-sm">
                             <span>Subtotal</span>
-                            <span>{formatPrice(Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof TicketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0))}</span>
+                            <span>{formatPrice(Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type]), 0) + (coolerBoxPass ? 100 : 0))}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span>Service Fee (5%)</span>
-                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof TicketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 0.05)}</span>
+                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type]), 0) + (coolerBoxPass ? 100 : 0)) * 0.05)}</span>
                           </div>
                           <div className="flex justify-between font-medium pt-2 border-t border-base-300">
                             <span>Total</span>
-                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof TicketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 1.05)}</span>
+                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type]), 0) + (coolerBoxPass ? 100 : 0)) * 1.05)}</span>
                           </div>
                         </div>
 
