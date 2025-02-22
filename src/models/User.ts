@@ -12,10 +12,26 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
   },
   image: {
     type: String,
+    default: null,
+  },
+  phone: {
+    type: String,
+    default: null,
+    sparse: true
+  },
+  location: {
+    type: String,
+    default: null,
+    sparse: true
+  },
+  bio: {
+    type: String,
+    default: null,
+    sparse: true
   },
   role: {
     type: String,
@@ -30,6 +46,28 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+}, {
+  strict: true,
+  toJSON: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      ret.phone = ret.phone || '';
+      ret.location = ret.location || '';
+      ret.bio = ret.bio || '';
+      ret.image = ret.image || '';
+      return ret;
+    }
+  },
+  toObject: { virtuals: true }
 });
 
-export default mongoose.models.User || mongoose.model('User', userSchema);
+// Update timestamps on save
+userSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+// Create or update the model
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+export default User;
