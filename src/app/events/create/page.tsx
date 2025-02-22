@@ -16,7 +16,7 @@ const CATEGORIES = [
   'Fashion',
   'Food & Drink',
   'Sports',
-  'Arts',
+  'Arts & Theatre',
   'Education',
   'Entertainment',
   'Health'
