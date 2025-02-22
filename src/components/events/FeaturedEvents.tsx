@@ -2,13 +2,18 @@ import React from 'react';
 import EventCard from './EventCard';
 
 interface Event {
-  id: string;
+  _id: string;
   title: string;
   date: string;
   location: string;
-  price: number;
-  imageUrl: string;
+  images: string[];
   category: string;
+  ticketTypes: Array<{
+    name: string;
+    price: number;
+    quantity: number;
+    quantitySold: number;
+  }>;
 }
 
 const FeaturedEvents = ({ events }: { events: Event[] }) => {
@@ -21,7 +26,7 @@ const FeaturedEvents = ({ events }: { events: Event[] }) => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => (
-            <div key={event.id}>
+            <div key={event._id}>
               <EventCard {...event} />
             </div>
           ))}
