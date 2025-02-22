@@ -5,33 +5,115 @@ import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/contexts/cart';
 import { useToast } from '@/contexts/toast';
 
+interface EventRestrictions {
+  ageRestriction?: {
+    hasAgeLimit: boolean;
+    minimumAge: number;
+  };
+  noWeapons?: boolean;
+  noProfessionalCameras?: boolean;
+  noPets?: boolean;
+  hasCustomRestrictions?: boolean;
+  customRestrictions?: string[];
+  coolerBox?: {
+    allowed: boolean;
+    maxLiters: number;
+    price: number;
+  };
+}
+
+interface EventLocation {
+  address: string;
+  city: string;
+  country: string;
+  mapUrl: string;
+}
+
+interface EventScheduleItem {
+  time: string;
+  title: string;
+  description: string;
+}
+
+interface EventHighlight {
+  title: string;
+  description?: string;
+}
+
+interface Event {
+  _id: string;
+  name: string;
+  description: string;
+  date: string;
+  images: string[];
+  highlights: EventHighlight[];
+  restrictions: EventRestrictions;
+  location: EventLocation;
+  schedule: EventScheduleItem[];
+}
+
+interface TicketCounts {
+  regular: number;
+  vip: number;
+  vvip: number;
+}
+
+interface TicketPrices {
+  regular: number;
+  vip: number;
+  vvip: number;
+  coolerBox: number;
+}
+
 export default function EventDetails() {
   const params = useParams();
-  const id = params.id;
+  const id = params.id as string;
   const { addTicket, addCoolerBox } = useCart();
   const { showToast } = useToast();
-
-  const images = [
-    "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?q=80&w=2070&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2070&auto=format&fit=crop"
-  ];
-
+  const [event, setEvent] = useState<Event | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [currentImage, setCurrentImage] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
-  const [tickets, setTickets] = useState({
+  const [tickets, setTickets] = useState<TicketCounts>({
     regular: 0,
     vip: 0,
     vvip: 0
   });
   const [coolerBoxPass, setCoolerBoxPass] = useState(false);
 
-  const ticketPrices = {
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const response = await fetch(`/api/events/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch event');
+        }
+        const data = await response.json();
+        setEvent(data);
+      } catch (err) {
+        setError('Failed to load event details');
+        console.error('Error fetching event:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [id]);
+
+  const images = event?.images || [
+    "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?q=80&w=2070&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2070&auto=format&fit=crop"
+  ];
+
+  const ticketPrices: TicketPrices = {
     regular: 350,
     vip: 750,
     vvip: 1500,
@@ -45,7 +127,7 @@ export default function EventDetails() {
     }).format(price);
   };
 
-  const updateTicketCount = (type: 'regular' | 'vip' | 'vvip', increment: boolean) => {
+  const updateTicketCount = (type: keyof TicketCounts, increment: boolean) => {
     setTickets(prev => ({
       ...prev,
       [type]: increment ? prev[type] + 1 : Math.max(0, prev[type] - 1)
@@ -75,11 +157,11 @@ export default function EventDetails() {
     Object.entries(tickets).forEach(([type, quantity]) => {
       if (quantity > 0) {
         addTicket({
-          eventId: id as string,
-          eventName: "Summer Music Festival",
-          ticketType: type as 'regular' | 'vip' | 'vvip',
+          eventId: id,
+          eventName: event?.name || '',
+          ticketType: type as keyof TicketCounts,
           quantity: quantity,
-          price: ticketPrices[type as keyof typeof ticketPrices],
+          price: ticketPrices[type as keyof TicketPrices],
           imageUrl: images[0]
         });
       }
@@ -88,8 +170,8 @@ export default function EventDetails() {
     // Add cooler box if selected
     if (coolerBoxPass) {
       addCoolerBox({
-        eventId: id as string,
-        eventName: "Summer Music Festival",
+        eventId: id,
+        eventName: event?.name || '',
         price: ticketPrices.coolerBox
       });
     }
@@ -113,6 +195,38 @@ export default function EventDetails() {
     setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-base-100">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <div className="min-h-screen bg-base-100">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <h2 className="text-2xl font-bold mb-4">Error</h2>
+            <p className="text-error">{error || 'Event not found'}</p>
+            <Link href="/events" className="btn btn-primary mt-4">
+              Back to Events
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -134,7 +248,7 @@ export default function EventDetails() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Image Section */}
             <div className="lg:col-span-2">
-              <div className="relative h-[400px] lg:h-[500px] rounded-xl overflow-hidden shadow-lg group">
+              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg">
                 {/* Previous Button */}
                 <button 
                   onClick={prevImage}
@@ -160,8 +274,14 @@ export default function EventDetails() {
                   src={images[currentImage]}
                   alt="Event Image"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
                   className="object-cover transition-all duration-500"
-                  priority
+                  priority={currentImage === 0}
+                  onError={(e) => {
+                    // Fallback to a default image if loading fails
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop";
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
@@ -185,28 +305,32 @@ export default function EventDetails() {
                     <span className="badge badge-primary">Music</span>
                     <span className="badge badge-ghost">Featured</span>
                   </div>
-                  <h1 className="text-3xl font-bold mb-2">Summer Music Festival</h1>
-                  <p className="text-white/80">Experience the ultimate summer music festival featuring top artists.</p>
+                  <h1 className="text-3xl font-bold mb-2">{event.name}</h1>
+                  <p className="text-white/80">{event.description}</p>
                 </div>
               </div>
 
               {/* Thumbnail Gallery */}
-              <div className="mt-3 grid grid-cols-6 gap-2 px-1">
-                {images.map((img, index) => (
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {event.images.map((image, index) => (
                   <button
-                    key={index}
+                    key={image}
                     onClick={() => setCurrentImage(index)}
-                    className={`relative h-16 rounded-md overflow-hidden ${
-                      currentImage === index 
-                        ? 'ring-2 ring-primary ring-offset-1' 
-                        : 'opacity-70 hover:opacity-100'
+                    className={`relative aspect-[4/3] overflow-hidden rounded-md ${
+                      currentImage === index ? 'ring-2 ring-primary' : ''
                     }`}
                   >
                     <Image
-                      src={img}
+                      src={image}
                       alt={`Event Image ${index + 1}`}
                       fill
+                      sizes="(max-width: 768px) 25vw, 20vw"
                       className="object-cover"
+                      priority={index === 0}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop";
+                      }}
                     />
                   </button>
                 ))}
@@ -239,33 +363,26 @@ export default function EventDetails() {
                     <div>
                       <h3 className="text-lg font-semibold mb-4">Event Description</h3>
                       <p className="text-base-content/80 leading-relaxed">
-                        Join us for an unforgettable experience at the Summer Music Festival! 
-                        Featuring live performances from top artists, food vendors, and amazing activities.
-                        Don't miss out on the biggest music event of the summer.
+                        {event.description}
                       </p>
                       
                       <div className="divider"></div>
                       
                       <h3 className="text-lg font-semibold mb-4">Event Highlights</h3>
                       <ul className="space-y-2">
-                        <li className="flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                          </svg>
-                          <span>Live performances from top artists</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                          </svg>
-                          <span>Food and beverage vendors</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                          </svg>
-                          <span>Interactive activities and games</span>
-                        </li>
+                        {event.highlights.map((highlight, index) => (
+                          <li key={index} className="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                            <div>
+                              <span className="font-medium">{highlight.title}</span>
+                              {highlight.description && (
+                                <p className="text-sm text-base-content/70">{highlight.description}</p>
+                              )}
+                            </div>
+                          </li>
+                        ))}
                       </ul>
 
                       <div className="divider"></div>
@@ -273,51 +390,86 @@ export default function EventDetails() {
                       <h3 className="text-lg font-semibold mb-4">Event Rules & Restrictions</h3>
                       <div className="bg-base-300/50 rounded-lg p-4">
                         <ul className="space-y-3">
-                          <li className="flex items-start gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <div>
-                              <span className="font-medium">Age Restriction</span>
-                              <p className="text-sm text-base-content/70">No persons under 16 years of age will be admitted</p>
-                            </div>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <div>
-                              <span className="font-medium">No Weapons</span>
-                              <p className="text-sm text-base-content/70">Weapons of any kind are strictly prohibited</p>
-                            </div>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <div>
-                              <span className="font-medium">No Professional Cameras</span>
-                              <p className="text-sm text-base-content/70">Professional photography equipment is not allowed</p>
-                            </div>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <div>
-                              <span className="font-medium">No Pets</span>
-                              <p className="text-sm text-base-content/70">Pets are not allowed at the venue (service animals excepted)</p>
-                            </div>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-warning" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <div>
-                              <span className="font-medium">Cooler Boxes Allowed with Pass</span>
-                              <p className="text-sm text-base-content/70">Cooler boxes (max 50L) permitted with purchase of Cooler Box Pass</p>
-                            </div>
-                          </li>
+                          {/* Age Restriction */}
+                          {event.restrictions?.ageRestriction?.hasAgeLimit && (
+                            <li className="flex items-start gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              <div>
+                                <span className="font-medium">Age Restriction</span>
+                                <p className="text-sm text-base-content/70">
+                                  No persons under {event.restrictions?.ageRestriction?.minimumAge} years of age will be admitted
+                                </p>
+                              </div>
+                            </li>
+                          )}
+
+                          {/* No Weapons */}
+                          {event.restrictions?.noWeapons && (
+                            <li className="flex items-start gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              <div>
+                                <span className="font-medium">No Weapons</span>
+                                <p className="text-sm text-base-content/70">Weapons of any kind are strictly prohibited</p>
+                              </div>
+                            </li>
+                          )}
+
+                          {/* No Professional Cameras */}
+                          {event.restrictions?.noProfessionalCameras && (
+                            <li className="flex items-start gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              <div>
+                                <span className="font-medium">No Professional Cameras</span>
+                                <p className="text-sm text-base-content/70">Professional photography equipment is not allowed</p>
+                              </div>
+                            </li>
+                          )}
+
+                          {/* No Pets */}
+                          {event.restrictions?.noPets && (
+                            <li className="flex items-start gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              <div>
+                                <span className="font-medium">No Pets</span>
+                                <p className="text-sm text-base-content/70">Pets are not allowed at the venue (service animals excepted)</p>
+                              </div>
+                            </li>
+                          )}
+
+                          {/* Custom Restrictions */}
+                          {event.restrictions?.hasCustomRestrictions && event.restrictions?.customRestrictions?.map((restriction, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-error" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              <div>
+                                <span className="font-medium">{restriction}</span>
+                              </div>
+                            </li>
+                          ))}
+
+                          {/* Cooler Box */}
+                          {event.restrictions?.coolerBox?.allowed && (
+                            <li className="flex items-start gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-warning" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              <div>
+                                <span className="font-medium">Cooler Box Pass Required</span>
+                                <p className="text-sm text-base-content/70">
+                                  Maximum {event.restrictions?.coolerBox?.maxLiters}L allowed. Additional fee of {formatPrice(event.restrictions?.coolerBox?.price || 0)} applies.
+                                </p>
+                              </div>
+                            </li>
+                          )}
                         </ul>
                         <div className="mt-4 p-3 bg-warning/10 rounded-lg">
                           <p className="text-sm text-warning-content">
@@ -331,46 +483,17 @@ export default function EventDetails() {
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold mb-4">Event Schedule</h3>
                       <div className="space-y-4">
-                        <div className="flex items-start gap-4 p-4 bg-base-300/30 rounded-lg">
-                          <div className="text-center px-3 py-2 bg-primary/10 rounded-lg">
-                            <div className="text-xl font-bold text-primary">12:00</div>
-                            <div className="text-sm text-primary/70">PM</div>
+                        {event.schedule.map((schedule, index) => (
+                          <div key={index} className="flex items-start gap-4 p-4 bg-base-300/30 rounded-lg">
+                            <div className="text-center px-3 py-2 bg-primary/10 rounded-lg">
+                              <div className="text-xl font-bold text-primary">{schedule.time}</div>
+                            </div>
+                            <div>
+                              <h4 className="font-medium">{schedule.title}</h4>
+                              <p className="text-sm text-base-content/70">{schedule.description}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-medium">Gates Open</h4>
-                            <p className="text-sm text-base-content/70">Early arrival recommended to avoid queues</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4 p-4 bg-base-300/30 rounded-lg">
-                          <div className="text-center px-3 py-2 bg-primary/10 rounded-lg">
-                            <div className="text-xl font-bold text-primary">2:00</div>
-                            <div className="text-sm text-primary/70">PM</div>
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Opening Act</h4>
-                            <p className="text-sm text-base-content/70">Local artists performance</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4 p-4 bg-base-300/30 rounded-lg">
-                          <div className="text-center px-3 py-2 bg-primary/10 rounded-lg">
-                            <div className="text-xl font-bold text-primary">4:00</div>
-                            <div className="text-sm text-primary/70">PM</div>
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Main Event</h4>
-                            <p className="text-sm text-base-content/70">Headline performances begin</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4 p-4 bg-base-300/30 rounded-lg">
-                          <div className="text-center px-3 py-2 bg-primary/10 rounded-lg">
-                            <div className="text-xl font-bold text-primary">10:00</div>
-                            <div className="text-sm text-primary/70">PM</div>
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Event Ends</h4>
-                            <p className="text-sm text-base-content/70">Closing ceremony and final performances</p>
-                          </div>
-                        </div>
+                        ))}
                       </div>
                       <div className="p-4 bg-info/10 rounded-lg mt-6">
                         <p className="text-sm text-info-content">
@@ -391,9 +514,9 @@ export default function EventDetails() {
                             </svg>
                             <div>
                               <h4 className="font-medium">Venue Address</h4>
-                              <p className="text-sm text-base-content/70">Lagos Beach Resort</p>
-                              <p className="text-sm text-base-content/70">123 Victoria Island Way</p>
-                              <p className="text-sm text-base-content/70">Lagos, Nigeria</p>
+                              <p className="text-sm text-base-content/70">{event.location.address}</p>
+                              <p className="text-sm text-base-content/70">{event.location.city}</p>
+                              <p className="text-sm text-base-content/70">{event.location.country}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -425,7 +548,7 @@ export default function EventDetails() {
                         </div>
                         <div className="h-[300px] rounded-lg overflow-hidden">
                           <iframe 
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.7277267760897!2d3.4025990147715433!3d6.423764095343011!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf4cc9b07cf89%3A0xfa0853c5e89ed534!2sEko%20Atlantic!5e0!3m2!1sen!2sng!4v1645438641435!5m2!1sen!2sng" 
+                            src={event.location.mapUrl} 
                             width="100%" 
                             height="100%" 
                             style={{ border: 0 }} 
@@ -456,7 +579,7 @@ export default function EventDetails() {
                         </div>
                         <div>
                           <p className="text-sm text-base-content/70">Date</p>
-                          <p className="font-medium">July 15, 2024</p>
+                          <p className="font-medium">{event.date}</p>
                         </div>
                       </div>
 
@@ -469,7 +592,7 @@ export default function EventDetails() {
                         </div>
                         <div>
                           <p className="text-sm text-base-content/70">Location</p>
-                          <p className="font-medium">Lagos Beach Resort</p>
+                          <p className="font-medium">{event.location.address}</p>
                         </div>
                       </div>
 
@@ -617,15 +740,15 @@ export default function EventDetails() {
                           )}
                           <div className="flex justify-between text-sm">
                             <span>Subtotal</span>
-                            <span>{formatPrice(Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0))}</span>
+                            <span>{formatPrice(Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof TicketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0))}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span>Service Fee (5%)</span>
-                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 0.05)}</span>
+                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof TicketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 0.05)}</span>
                           </div>
                           <div className="flex justify-between font-medium pt-2 border-t border-base-300">
                             <span>Total</span>
-                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof typeof ticketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 1.05)}</span>
+                            <span>{formatPrice((Object.entries(tickets).reduce((sum, [type, quantity]) => sum + (quantity * ticketPrices[type as keyof TicketPrices]), 0) + (coolerBoxPass ? ticketPrices.coolerBox : 0)) * 1.05)}</span>
                           </div>
                         </div>
 
