@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -17,19 +16,25 @@ export default function SettingsTab() {
       <div className="border-2 border-neutral/30 bg-base-200 rounded-lg p-6 space-y-4 hover:border-neutral/50 transition-colors">
         <h3 className="text-lg font-semibold">Notifications</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
               <p className="font-medium">Email Notifications</p>
               <p className="text-sm text-base-content/70">Receive emails about your account activity</p>
             </div>
-            <Switch defaultChecked />
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" defaultChecked />
+              <div className="w-14 h-7 bg-base-300 border-2 border-neutral/30 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral/30 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+            </label>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
               <p className="font-medium">Marketing Emails</p>
               <p className="text-sm text-base-content/70">Receive emails about events and promotions</p>
             </div>
-            <Switch />
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" />
+              <div className="w-14 h-7 bg-base-300 border-2 border-neutral/30 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral/30 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+            </label>
           </div>
         </div>
       </div>
@@ -38,22 +43,37 @@ export default function SettingsTab() {
       <div className="border-2 border-neutral/30 bg-base-200 rounded-lg p-6 space-y-4 hover:border-neutral/50 transition-colors">
         <h3 className="text-lg font-semibold">Security</h3>
         <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Current Password</label>
-            <Input type="password" />
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text font-medium">Current Password</span>
+            </label>
+            <Input
+              type="password"
+              className="input input-bordered border-2 border-neutral/30 bg-base-100 w-full focus:outline-2 focus:outline-primary hover:border-neutral/50"
+              placeholder="Enter current password"
+            />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">New Password</label>
-            <Input type="password" />
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text font-medium">New Password</span>
+            </label>
+            <Input
+              type="password"
+              className="input input-bordered border-2 border-neutral/30 bg-base-100 w-full focus:outline-2 focus:outline-primary hover:border-neutral/50"
+              placeholder="Enter new password"
+            />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Confirm New Password</label>
-            <Input type="password" />
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text font-medium">Confirm New Password</span>
+            </label>
+            <Input
+              type="password"
+              className="input input-bordered border-2 border-neutral/30 bg-base-100 w-full focus:outline-2 focus:outline-primary hover:border-neutral/50"
+              placeholder="Confirm new password"
+            />
           </div>
-
-          <div className="pt-2">
-            <Button>Update Password</Button>
-          </div>
+          <Button className="btn btn-primary">Update Password</Button>
         </div>
       </div>
 
@@ -63,7 +83,7 @@ export default function SettingsTab() {
         <p className="text-base-content/70">
           Once you delete your account, there is no going back. Please be certain.
         </p>
-        <Button variant="destructive">Delete Account</Button>
+        <Button className="btn btn-error">Delete Account</Button>
       </div>
     </div>
   );
