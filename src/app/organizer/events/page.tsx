@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
+import Link from 'next/link';
 import { 
   Calendar,
   MapPin,
@@ -397,119 +398,121 @@ export default function OrganizerEventsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEvents.map((event) => (
-                <div key={event._id} className="card bg-base-100 shadow-xl border-2 border-base-300">
-                  <figure className="relative">
-                    <img 
-                      src={event.images[0] || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop'} 
-                      alt={event.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="absolute top-4 right-4 flex items-center gap-2">
-                      <div className={`badge ${getEventStatus(event)} badge-lg`}>
-                        {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                      </div>
-                      {event.status === 'draft' && (
-                        <div className="tooltip tooltip-left" data-tip="This event is private and must be activated to be displayed on the public">
-                          <div className="badge badge-ghost badge-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                            </svg>
-                          </div>
+                <div key={event._id} className="card bg-base-100 shadow-xl border-2 border-base-300 rounded-2xl">
+                  <Link href={`/events/${event._id}`} className="cursor-pointer">
+                    <figure className="relative rounded-t-2xl overflow-hidden">
+                      <img 
+                        src={event.images[0] || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop'} 
+                        alt={event.title}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="absolute top-4 right-4 flex items-center gap-2">
+                        <div className={`badge ${getEventStatus(event)} badge-lg`}>
+                          {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                         </div>
-                      )}
-                    </div>
-                  </figure>
-                  <div className="card-body flex flex-col h-full">
-                    <div className="flex-grow">
-                      <h2 className="card-title">{event.title}</h2>
-                      <div className="flex items-center gap-2 text-base-content/70">
-                        <MapPin className="w-4 h-4" />
-                        {(() => {
-                          const venueInfo = getVenueInfo(event.location);
-                          return venueInfo ? (
-                            <span>{venueInfo.venue.name}, {venueInfo.venue.city}</span>
-                          ) : (
-                            <span>Location not available</span>
-                          );
-                        })()}
-                      </div>
-                      <div className="flex items-center gap-2 text-base-content/70">
-                        <Calendar className="w-4 h-4" />
-                        <span>{formatDateTime(event.date)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-base-content/70">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatDateTime(event.endTime)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-base-content/70 mb-2">
-                        <Users className="w-4 h-4" />
-                        <span>
-                          {getTotalTicketsSold(event.ticketTypes)} / {event.ticketTypes?.reduce((total, ticket) => total + ticket.quantity, 0) || 0} tickets sold
-                        </span>
-                      </div>
-                      
-                      {/* Ticket Types */}
-                      <div className="space-y-2 mt-2 border-t pt-2">
-                        <div className="text-sm font-medium text-base-content/70">Ticket Types:</div>
-                        {event.ticketTypes?.map((ticket) => (
-                          <div key={ticket._id} className="flex justify-between items-center text-sm">
-                            <div className="flex-1">
-                              <span className="font-medium">{ticket.name}</span>
-                              <span className="text-base-content/60"> · R{ticket.price}</span>
-                            </div>
-                            <div className="text-base-content/60">
-                              {ticket.quantitySold} / {ticket.quantity}
+                        {event.status === 'draft' && (
+                          <div className="tooltip tooltip-left" data-tip="This event is private and must be activated to be displayed on the public">
+                            <div className="badge badge-ghost badge-sm">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                              </svg>
                             </div>
                           </div>
-                        ))}
+                        )}
                       </div>
-
-                      {/* Revenue Information */}
-                      <div className="space-y-2 mt-2 border-t pt-2">
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm font-medium text-base-content/70">Current Revenue:</div>
-                          <div className="text-sm font-semibold text-success">
-                            R {getCurrentRevenue(event.ticketTypes).toLocaleString()}
-                          </div>
+                    </figure>
+                    <div className="card-body">
+                      <div className="flex-grow">
+                        <h2 className="card-title">{event.title}</h2>
+                        <div className="flex items-center gap-2 text-base-content/70">
+                          <MapPin className="w-4 h-4" />
+                          {(() => {
+                            const venueInfo = getVenueInfo(event.location);
+                            return venueInfo ? (
+                              <span>{venueInfo.venue.name}, {venueInfo.venue.city}</span>
+                            ) : (
+                              <span>Location not available</span>
+                            );
+                          })()}
                         </div>
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm font-medium text-base-content/70">Expected Revenue:</div>
-                          <div className="text-sm font-semibold text-primary">
-                            R {getTotalRevenue(event.ticketTypes).toLocaleString()}
+                        <div className="flex items-center gap-2 text-base-content/70">
+                          <Calendar className="w-4 h-4" />
+                          <span>{formatDateTime(event.date)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-base-content/70">
+                          <Clock className="w-4 h-4" />
+                          <span>{formatDateTime(event.endTime)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-base-content/70 mb-2">
+                          <Users className="w-4 h-4" />
+                          <span>
+                            {getTotalTicketsSold(event.ticketTypes)} / {event.ticketTypes?.reduce((total, ticket) => total + ticket.quantity, 0) || 0} tickets sold
+                          </span>
+                        </div>
+                        
+                        {/* Ticket Types */}
+                        <div className="space-y-2 mt-2 border-t pt-2">
+                          <div className="text-sm font-medium text-base-content/70">Ticket Types:</div>
+                          {event.ticketTypes?.map((ticket) => (
+                            <div key={ticket._id} className="flex justify-between items-center text-sm">
+                              <div className="flex-1">
+                                <span className="font-medium">{ticket.name}</span>
+                                <span className="text-base-content/60"> · R{ticket.price}</span>
+                              </div>
+                              <div className="text-base-content/60">
+                                {ticket.quantitySold} / {ticket.quantity}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Revenue Information */}
+                        <div className="space-y-2 mt-2 border-t pt-2">
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm font-medium text-base-content/70">Current Revenue:</div>
+                            <div className="text-sm font-semibold text-success">
+                              R {getCurrentRevenue(event.ticketTypes).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm font-medium text-base-content/70">Expected Revenue:</div>
+                            <div className="text-sm font-semibold text-primary">
+                              R {getTotalRevenue(event.ticketTypes).toLocaleString()}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                  </Link>
 
-                    {/* Action Buttons - Now at the bottom */}
-                    <div className="card-actions justify-between mt-auto pt-4 border-t">
-                      {event.status === 'draft' && (
-                        <button 
-                          onClick={() => activateEvent(event._id)}
-                          className="btn btn-primary btn-sm"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-1">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Activate
-                        </button>
-                      )}
-                      <div className="flex gap-2">
-                        <a href={`/events/${event._id}/edit`} className="btn btn-ghost btn-sm">
-                          <Edit className="w-4 h-4" />
-                        </a>
-                        <button 
-                          onClick={() => openDeleteModal(event._id)}
-                          className="btn btn-ghost btn-sm text-error hover:bg-error hover:text-white"
-                          disabled={isDeleting && eventToDelete === event._id}
-                        >
-                          {isDeleting && eventToDelete === event._id ? (
-                            <span className="loading loading-spinner loading-sm"></span>
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
+                  {/* Action Buttons - Now at the bottom */}
+                  <div className="card-actions justify-between mt-auto p-4 pt-2 border-t">
+                    {event.status === 'draft' && (
+                      <button 
+                        onClick={() => activateEvent(event._id)}
+                        className="btn btn-primary btn-sm"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-1">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Activate
+                      </button>
+                    )}
+                    <div className="flex gap-2">
+                      <a href={`/events/${event._id}/edit`} className="btn btn-ghost btn-sm">
+                        <Edit className="w-4 h-4" />
+                      </a>
+                      <button 
+                        onClick={() => openDeleteModal(event._id)}
+                        className="btn btn-ghost btn-sm text-error hover:bg-error hover:text-white"
+                        disabled={isDeleting && eventToDelete === event._id}
+                      >
+                        {isDeleting && eventToDelete === event._id ? (
+                          <span className="loading loading-spinner loading-sm"></span>
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
