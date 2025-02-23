@@ -419,67 +419,70 @@ export default function OrganizerEventsPage() {
                       )}
                     </div>
                   </figure>
-                  <div className="card-body">
-                    <h2 className="card-title">{event.title}</h2>
-                    <div className="flex items-center gap-2 text-base-content/70">
-                      <MapPin className="w-4 h-4" />
-                      {(() => {
-                        const venueInfo = getVenueInfo(event.location);
-                        return venueInfo ? (
-                          <span>{venueInfo.venue.name}, {venueInfo.venue.city}</span>
-                        ) : (
-                          <span>Location not available</span>
-                        );
-                      })()}
-                    </div>
-                    <div className="flex items-center gap-2 text-base-content/70">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDateTime(event.date)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-base-content/70">
-                      <Clock className="w-4 h-4" />
-                      <span>{formatDateTime(event.endTime)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-base-content/70 mb-2">
-                      <Users className="w-4 h-4" />
-                      <span>
-                        {getTotalTicketsSold(event.ticketTypes)} / {event.ticketTypes?.reduce((total, ticket) => total + ticket.quantity, 0) || 0} tickets sold
-                      </span>
-                    </div>
-                    
-                    {/* Ticket Types */}
-                    <div className="space-y-2 mt-2 border-t pt-2">
-                      <div className="text-sm font-medium text-base-content/70">Ticket Types:</div>
-                      {event.ticketTypes?.map((ticket) => (
-                        <div key={ticket._id} className="flex justify-between items-center text-sm">
-                          <div className="flex-1">
-                            <span className="font-medium">{ticket.name}</span>
-                            <span className="text-base-content/60"> · R{ticket.price}</span>
+                  <div className="card-body flex flex-col h-full">
+                    <div className="flex-grow">
+                      <h2 className="card-title">{event.title}</h2>
+                      <div className="flex items-center gap-2 text-base-content/70">
+                        <MapPin className="w-4 h-4" />
+                        {(() => {
+                          const venueInfo = getVenueInfo(event.location);
+                          return venueInfo ? (
+                            <span>{venueInfo.venue.name}, {venueInfo.venue.city}</span>
+                          ) : (
+                            <span>Location not available</span>
+                          );
+                        })()}
+                      </div>
+                      <div className="flex items-center gap-2 text-base-content/70">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDateTime(event.date)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-base-content/70">
+                        <Clock className="w-4 h-4" />
+                        <span>{formatDateTime(event.endTime)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-base-content/70 mb-2">
+                        <Users className="w-4 h-4" />
+                        <span>
+                          {getTotalTicketsSold(event.ticketTypes)} / {event.ticketTypes?.reduce((total, ticket) => total + ticket.quantity, 0) || 0} tickets sold
+                        </span>
+                      </div>
+                      
+                      {/* Ticket Types */}
+                      <div className="space-y-2 mt-2 border-t pt-2">
+                        <div className="text-sm font-medium text-base-content/70">Ticket Types:</div>
+                        {event.ticketTypes?.map((ticket) => (
+                          <div key={ticket._id} className="flex justify-between items-center text-sm">
+                            <div className="flex-1">
+                              <span className="font-medium">{ticket.name}</span>
+                              <span className="text-base-content/60"> · R{ticket.price}</span>
+                            </div>
+                            <div className="text-base-content/60">
+                              {ticket.quantitySold} / {ticket.quantity}
+                            </div>
                           </div>
-                          <div className="text-base-content/60">
-                            {ticket.quantitySold} / {ticket.quantity}
+                        ))}
+                      </div>
+
+                      {/* Revenue Information */}
+                      <div className="space-y-2 mt-2 border-t pt-2">
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm font-medium text-base-content/70">Current Revenue:</div>
+                          <div className="text-sm font-semibold text-success">
+                            R {getCurrentRevenue(event.ticketTypes).toLocaleString()}
                           </div>
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Revenue Information */}
-                    <div className="space-y-2 mt-2 border-t pt-2">
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-base-content/70">Current Revenue:</div>
-                        <div className="text-sm font-semibold text-success">
-                          R {getCurrentRevenue(event.ticketTypes).toLocaleString()}
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm font-medium text-base-content/70">Expected Revenue:</div>
+                          <div className="text-sm font-semibold text-primary">
+                            R {getTotalRevenue(event.ticketTypes).toLocaleString()}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-base-content/70">Expected Revenue:</div>
-                        <div className="text-sm font-semibold text-primary">
-                          R {getTotalRevenue(event.ticketTypes).toLocaleString()}
-                        </div>
-                      </div>
                     </div>
 
-                    <div className="card-actions justify-between mt-4">
+                    {/* Action Buttons - Now at the bottom */}
+                    <div className="card-actions justify-between mt-auto pt-4 border-t">
                       {event.status === 'draft' && (
                         <button 
                           onClick={() => activateEvent(event._id)}

@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ProfileTab from '@/components/profile/ProfileTab';
 import OrdersTab from '@/components/profile/OrdersTab';
 import MyEventsTab from '@/components/profile/MyEventsTab';
@@ -9,10 +9,27 @@ import SettingsTab from '@/components/profile/SettingsTab';
 import Navbar from '@/components/layout/Navbar';
 import { useSession } from 'next-auth/react';
 
+type TabType = 'profile' | 'orders' | 'myevents' | 'settings';
+
 export default function ProfilePage() {
   const searchParams = useSearchParams();
-  const defaultTab = searchParams.get('tab') || 'profile';
+  const router = useRouter();
+  const defaultTab = searchParams.get('tab') as TabType || 'profile';
+  const [activeTab, setActiveTab] = useState<TabType>(defaultTab);
   const { data: session } = useSession();
+
+  // Update URL without refresh when tab changes
+  useEffect(() => {
+    const newUrl = activeTab === 'profile' 
+      ? '/profile'
+      : `/profile?tab=${activeTab}`;
+    
+    window.history.pushState({}, '', newUrl);
+  }, [activeTab]);
+
+  const handleTabClick = (tab: TabType) => {
+    setActiveTab(tab);
+  };
 
   return (
     <>
@@ -52,38 +69,38 @@ export default function ProfilePage() {
             </div>
             {/* Tabs */}
             <div className="tabs tabs-bordered border-b-2 border-base-300">
-              <a 
-                className={`tab tab-lg flex-1 ${defaultTab === 'profile' ? 'tab-active' : ''}`}
-                href="/profile"
+              <button 
+                onClick={() => handleTabClick('profile')}
+                className={`tab tab-lg flex-1 ${activeTab === 'profile' ? 'tab-active' : ''}`}
               >
                 Profile
-              </a>
-              <a 
-                className={`tab tab-lg flex-1 ${defaultTab === 'orders' ? 'tab-active' : ''}`}
-                href="/profile?tab=orders"
+              </button>
+              <button 
+                onClick={() => handleTabClick('orders')}
+                className={`tab tab-lg flex-1 ${activeTab === 'orders' ? 'tab-active' : ''}`}
               >
                 Orders
-              </a>
-              <a 
-                className={`tab tab-lg flex-1 ${defaultTab === 'myevents' ? 'tab-active' : ''}`}
-                href="/profile?tab=myevents"
+              </button>
+              <button 
+                onClick={() => handleTabClick('myevents')}
+                className={`tab tab-lg flex-1 ${activeTab === 'myevents' ? 'tab-active' : ''}`}
               >
                 My Events
-              </a>
-              <a 
-                className={`tab tab-lg flex-1 ${defaultTab === 'settings' ? 'tab-active' : ''}`}
-                href="/profile?tab=settings"
+              </button>
+              <button 
+                onClick={() => handleTabClick('settings')}
+                className={`tab tab-lg flex-1 ${activeTab === 'settings' ? 'tab-active' : ''}`}
               >
                 Settings
-              </a>
+              </button>
             </div>
 
             {/* Tab Content */}
             <div className="p-6">
-              {defaultTab === 'profile' && <ProfileTab />}
-              {defaultTab === 'orders' && <OrdersTab />}
-              {defaultTab === 'myevents' && <MyEventsTab />}
-              {defaultTab === 'settings' && <SettingsTab />}
+              {activeTab === 'profile' && <ProfileTab />}
+              {activeTab === 'orders' && <OrdersTab />}
+              {activeTab === 'myevents' && <MyEventsTab />}
+              {activeTab === 'settings' && <SettingsTab />}
             </div>
           </div>
         </div>
