@@ -4,12 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ProfileTab from '@/components/profile/ProfileTab';
 import OrdersTab from '@/components/profile/OrdersTab';
-import MyEventsTab from '@/components/profile/MyEventsTab';
 import SettingsTab from '@/components/profile/SettingsTab';
 import Navbar from '@/components/layout/Navbar';
 import { useSession } from 'next-auth/react';
 
-type TabType = 'profile' | 'orders' | 'myevents' | 'settings';
+type TabType = 'profile' | 'orders' | 'settings';
 
 export default function ProfilePage() {
   const searchParams = useSearchParams();
@@ -82,12 +81,6 @@ export default function ProfilePage() {
                 Orders
               </button>
               <button 
-                onClick={() => handleTabClick('myevents')}
-                className={`tab tab-lg flex-1 ${activeTab === 'myevents' ? 'tab-active' : ''}`}
-              >
-                My Events
-              </button>
-              <button 
                 onClick={() => handleTabClick('settings')}
                 className={`tab tab-lg flex-1 ${activeTab === 'settings' ? 'tab-active' : ''}`}
               >
@@ -99,7 +92,6 @@ export default function ProfilePage() {
             <div className="p-6">
               {activeTab === 'profile' && <ProfileTab />}
               {activeTab === 'orders' && <OrdersTab />}
-              {activeTab === 'myevents' && <MyEventsTab />}
               {activeTab === 'settings' && <SettingsTab />}
             </div>
           </div>
