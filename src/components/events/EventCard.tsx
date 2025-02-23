@@ -66,10 +66,10 @@ const EventCard = ({
   const imageSource = images?.[0] || imageUrl;
 
   return (
-    <Link href={`/events/${eventId}`} className="block">
-      <div className="relative overflow-hidden rounded-xl bg-white border-2 border-gray-300 hover:border-primary/70 shadow-sm hover:shadow-md transition-all">
+    <Link href={`/events/${eventId}`} className="block h-full">
+      <div className="relative overflow-hidden rounded-xl bg-white border-2 border-gray-300 hover:border-primary/70 shadow-sm hover:shadow-md transition-all h-full flex flex-col">
         {/* Image Container */}
-        <div className="relative h-48 overflow-hidden rounded-t-xl">
+        <div className="relative h-48 overflow-hidden rounded-t-xl flex-shrink-0">
           <Image
             src={imageSource || "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop"}
             alt={title}
@@ -90,7 +90,7 @@ const EventCard = ({
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4 flex-grow flex flex-col">
           {/* Title */}
           <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mb-3">
             {title}

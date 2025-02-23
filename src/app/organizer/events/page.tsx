@@ -398,9 +398,9 @@ export default function OrganizerEventsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEvents.map((event) => (
-                <div key={event._id} className="card bg-base-100 shadow-xl border-2 border-base-300 rounded-2xl">
-                  <Link href={`/events/${event._id}`} className="cursor-pointer">
-                    <figure className="relative rounded-t-2xl overflow-hidden">
+                <div key={event._id} className="card bg-base-100 shadow-xl border-2 border-base-300 rounded-2xl h-full">
+                  <Link href={`/events/${event._id}`} className="cursor-pointer flex flex-col flex-grow">
+                    <figure className="relative rounded-t-2xl overflow-hidden h-48">
                       <img 
                         src={event.images[0] || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop'} 
                         alt={event.title}
@@ -421,7 +421,7 @@ export default function OrganizerEventsPage() {
                         )}
                       </div>
                     </figure>
-                    <div className="card-body">
+                    <div className="card-body flex-grow">
                       <div className="flex-grow">
                         <h2 className="card-title">{event.title}</h2>
                         <div className="flex items-center gap-2 text-base-content/70">
