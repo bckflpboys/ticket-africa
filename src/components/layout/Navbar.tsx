@@ -41,7 +41,7 @@ const Navbar = () => {
                   <span className="text-xs font-normal text-base-content/70">{session.user?.email}</span>
                 </li>
                 <li><Link href="/profile" className="py-2">Profile</Link></li>
-                <li><Link href="/profile?tab=orders" className="py-2">Orders</Link></li>
+                <li><Link href="/tickets" className="py-2">Orders</Link></li>
                 <li><Link href="/profile?tab=myevents" className="py-2">My Events</Link></li>
                 <li><Link href="/profile?tab=settings" className="py-2">Settings</Link></li>
                 <li><button onClick={() => signOut()} className="py-2">Logout</button></li>

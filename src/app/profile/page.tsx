@@ -58,12 +58,18 @@ export default function ProfilePage() {
         <div className="container mx-auto px-4 py-8">
           <div className="card bg-base-100 shadow-xl mt-[-32px] border-2 border-base-300">
             {/* Organizer Centre Link */}
-            <div className="p-4 bg-primary/5 border-b-2 border-base-300">
+            <div className="p-4 bg-primary/5 border-b-2 border-base-300 flex gap-4">
               <a 
                 href="/organizer"
                 className="btn btn-primary"
               >
                 Go to Organizer Centre
+              </a>
+              <a 
+                href="/tickets"
+                className="btn btn-secondary"
+              >
+                View Tickets
               </a>
             </div>
             {/* Tabs */}

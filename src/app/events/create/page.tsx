@@ -418,6 +418,10 @@ export default function CreateEvent() {
           images: uploadedImageUrls,
           ticketTypes,
           tags: formData.tags.split(',').map(tag => tag.trim()),
+          // Map cooler box data to root level fields
+          coolerBoxPass: formattedRestrictions.coolerBox.allowed,
+          coolerBoxLiters: formattedRestrictions.coolerBox.maxLiters,
+          coolerBoxPrice: formattedRestrictions.coolerBox.price
         }),
       });
       if (!response.ok) {

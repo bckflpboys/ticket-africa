@@ -1,28 +1,64 @@
 'use client';
 
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
+import Image from 'next/image';
+
+interface Ticket {
+  ticketType: string;
+  quantity: number;
+  price: number;
+}
+
+interface Event {
+  _id: string;
+  name: string;
+  date: string;
+  venue: string;
+  image: string;
+}
+
+interface TicketOrder {
+  orderId: string;
+  orderDate: string;
+  event: Event;
+  tickets: Ticket[];
+  total: number;
+  paymentReference: string;
+  paymentStatus: string;
+}
 
 export default function OrdersTab() {
-  const orders = [
-    {
-      id: '1',
-      eventName: 'Summer Music Festival',
-      date: '2024-07-15',
-      status: 'Confirmed',
-      amount: 150.00,
-      tickets: 2
-    },
-    {
-      id: '2',
-      eventName: 'Tech Conference 2024',
-      date: '2024-08-20',
-      status: 'Pending',
-      amount: 299.99,
-      tickets: 1
-    }
-  ];
+  const [orders, setOrders] = useState<TicketOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch('/api/tickets');
+        const data = await response.json();
+        if (data.tickets) {
+          setOrders(data.tickets);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -34,30 +70,70 @@ export default function OrdersTab() {
         {orders.length > 0 ? (
           orders.map((order) => (
             <div 
-              key={order.id} 
-              className="border-2 border-neutral/30 bg-base-200 rounded-lg p-4 hover:border-neutral/50 transition-colors"
+              key={order.orderId} 
+              className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer"
+              onClick={() => router.push(`/tickets/${order.orderId}`)}
             >
-              <div className="flex flex-col md:flex-row justify-between gap-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg">{order.eventName}</h3>
-                  <p className="text-base-content/70">Date: {order.date}</p>
-                  <p className="text-base-content/70">Tickets: {order.tickets}</p>
-                </div>
-                <div className="space-y-2 text-right">
-                  <div className={`inline-flex px-3 py-1 rounded-full text-sm
-                    ${order.status === 'Confirmed' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}
-                  >
-                    {order.status}
+              <div className="card-body">
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Event Image */}
+                  <div className="relative w-full md:w-48 h-48 bg-gray-200 rounded-lg">
+                    {order.event.image && (
+                      <Image
+                        src={order.event.image}
+                        alt={order.event.name}
+                        fill
+                        className="object-cover rounded-lg"
+                        priority
+                      />
+                    )}
                   </div>
-                  <p className="font-semibold">R {order.amount.toFixed(2)}</p>
-                  <Button variant="ghost" size="sm" className="btn-sm">View Details</Button>
+
+                  {/* Event Details */}
+                  <div className="flex-grow">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h2 className="text-2xl font-bold mb-2">{order.event.name}</h2>
+                        <p className="text-base-content/70 mb-4">
+                          {format(new Date(order.event.date), 'EEEE, MMMM d, yyyy')} at {order.event.venue}
+                        </p>
+                      </div>
+                      <div className="badge badge-success">{order.paymentStatus}</div>
+                    </div>
+
+                    {/* Tickets */}
+                    <div className="space-y-2">
+                      {order.tickets.map((ticket, index) => (
+                        <div key={index} className="flex justify-between items-center">
+                          <span>{ticket.quantity}x {ticket.ticketType}</span>
+                          <span>R {ticket.price.toFixed(2)}</span>
+                        </div>
+                      ))}
+                      <div className="divider my-2"></div>
+                      <div className="flex justify-between items-center font-bold">
+                        <span>Total</span>
+                        <span>R {order.total.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 text-sm text-base-content/70">
+                      <p>Order #{order.orderId.slice(-8)}</p>
+                      <p>Ordered on {format(new Date(order.orderDate), 'MMM d, yyyy h:mm a')}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p>No orders found</p>
+          <div className="text-center py-8">
+            <p className="text-base-content/70">No orders found</p>
+            <button 
+              className="btn btn-primary mt-4"
+              onClick={() => router.push('/events')}
+            >
+              Browse Events
+            </button>
           </div>
         )}
       </div>

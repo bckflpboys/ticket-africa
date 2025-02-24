@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from './toast';
+import useLocalStorage from '@/hooks/useLocalStorage';
 
 interface TicketItem {
   id: string;
@@ -43,9 +44,14 @@ const CartContext = createContext<CartContextType>({
 });
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [tickets, setTickets] = useState<TicketItem[]>([]);
-  const [coolerBoxes, setCoolerBoxes] = useState<CoolerBoxItem[]>([]);
+  const [tickets, setTickets, ticketsInitialized] = useLocalStorage<TicketItem[]>('cart_tickets', []);
+  const [coolerBoxes, setCoolerBoxes, coolerBoxesInitialized] = useLocalStorage<CoolerBoxItem[]>('cart_coolerBoxes', []);
   const { showToast } = useToast();
+
+  // Don't render children until storage is initialized
+  if (!ticketsInitialized || !coolerBoxesInitialized) {
+    return null;
+  }
 
   const addTicket = (ticket: Omit<TicketItem, 'id'>) => {
     setTickets(prev => {
