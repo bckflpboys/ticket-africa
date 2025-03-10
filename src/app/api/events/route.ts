@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { connectToDB } from '@/lib/mongoose';
 import Event from '@/models/Event';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '../auth/[...nextauth]/auth.config';
 import { v2 as cloudinary } from 'cloudinary';
 
 // Configure Cloudinary

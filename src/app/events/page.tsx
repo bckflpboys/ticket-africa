@@ -86,7 +86,7 @@ function filterEvents(events: Event[], filters: SearchFilters): Event[] {
     }
 
     // Tags filter
-    if (filters.tags.length > 0) {
+    if (filters.tags && filters.tags.length > 0) {
       const hasMatchingTag = filters.tags.some(tag => 
         event.tags.some(eventTag => eventTag.toLowerCase().includes(tag.toLowerCase()))
       );

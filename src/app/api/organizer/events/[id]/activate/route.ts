@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../../auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { connectToDB } from '@/lib/mongoose';
 import Event from '@/models/Event';
 
 export async function PATCH(
   request: Request,
-  context: { params: { id: string } }
+  context: {
+    params: {
+      id: string;
+    }
+  }
 ) {
   try {
     // Get and validate the ID parameter
-    const { id } = await Promise.resolve(context.params);
+    const { id } = context.params;
     if (!id) {
       return NextResponse.json(
         { error: 'Event ID is required' },

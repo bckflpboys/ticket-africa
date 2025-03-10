@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDB } from '@/lib/mongoose';
 import User from '@/models/User';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { Document, Types } from 'mongoose';
 
 interface UserDocument extends Document {
