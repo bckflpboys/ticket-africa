@@ -4,41 +4,58 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { connectToDB } from '@/lib/mongoose';
 import Order from '@/models/Order';
 import Event from '@/models/Event';
+import mongoose from 'mongoose';
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
+      console.log('No user session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectToDB();
 
-    // Get all completed orders for the user with populated event details
+    // Try both string ID and ObjectId in the query
+    const userId = session.user.id;
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    
     const orders = await Order.find({
-      userId: session.user.id,
+      $or: [
+        { userId: userId },
+        { userId: userObjectId }
+      ],
       paymentStatus: 'completed'
     }).populate({
       path: 'eventId',
       model: Event,
-      select: 'name date venue image description'
-    }).sort({ createdAt: -1 }); // Most recent orders first
+      select: 'name date venue'
+    }).lean();
+
+    console.log('Query with both ID types:', { 
+      stringId: userId, 
+      objectId: userObjectId.toString(),
+      orderCount: orders.length 
+    });
+
+    if (!orders || orders.length === 0) {
+      return NextResponse.json({ tickets: [] });
+    }
 
     // Transform orders to include event details with tickets
-    const tickets = orders.map(order => ({
-      orderId: order._id,
+    const tickets = orders.map((order: any) => ({
+      orderId: order._id.toString(),
       orderDate: order.createdAt,
-      event: {
-        _id: order.eventId._id,
+      event: order.eventId ? {
+        _id: order.eventId._id.toString(),
         name: order.eventId.name,
         date: order.eventId.date,
         venue: order.eventId.venue,
-        image: order.eventId.image,
-        description: order.eventId.description
-      },
+      } : null,
       tickets: order.tickets,
       total: order.total,
-      paymentReference: order.paymentReference
+      paymentReference: order.paymentReference,
+      paymentStatus: order.paymentStatus
     }));
 
     return NextResponse.json({ tickets });

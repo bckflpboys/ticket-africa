@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const OrderSchema = new mongoose.Schema({
   userId: {
-    type: String,
+    type: String,  // Changed back to String to match your database
     required: true
   },
   eventId: {

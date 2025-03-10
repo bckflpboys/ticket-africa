@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { connectToDB } from '@/lib/mongoose';
 import Order from '@/models/Order';
+import mongoose from 'mongoose';
 
 interface CartItem {
   eventId: string;
@@ -65,7 +66,7 @@ export async function GET(req: NextRequest) {
       // Create order with completed status
       const order = await Order.create({
         userId: session.user.id,
-        eventId,
+        eventId: new mongoose.Types.ObjectId(eventId),
         tickets: items.map((item: CartItem) => ({
           ticketType: item.name || item.ticketType || 'Unknown',
           quantity: item.quantity || 1,
@@ -96,7 +97,7 @@ export async function GET(req: NextRequest) {
 
       const order = await Order.create({
         userId: session.user.id,
-        eventId,
+        eventId: new mongoose.Types.ObjectId(eventId),
         tickets: items.map((item: CartItem) => ({
           ticketType: item.name || item.ticketType || 'Unknown',
           quantity: item.quantity || 1,
@@ -116,7 +117,7 @@ export async function GET(req: NextRequest) {
       });
     }
   } catch (error) {
-    console.error('Payment verification error:', error);
+    console.error('Error verifying payment:', error);
     return NextResponse.json(
       { error: 'Failed to verify payment' },
       { status: 500 }

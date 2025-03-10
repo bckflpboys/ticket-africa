@@ -37,10 +37,15 @@ export default function OrdersTab() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
+        console.log('Fetching orders...');
         const response = await fetch('/api/tickets');
         const data = await response.json();
+        console.log('Received data:', data);
         if (data.tickets) {
+          console.log('Setting orders:', data.tickets);
           setOrders(data.tickets);
+        } else {
+          console.log('No tickets found in response');
         }
       } catch (error) {
         console.error('Error fetching orders:', error);
