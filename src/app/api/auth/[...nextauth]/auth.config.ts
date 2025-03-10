@@ -1,4 +1,3 @@
-import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { connectToDB } from "@/lib/mongoose";
@@ -12,67 +11,61 @@ function verifyPassword(password: string, hashedPassword: string): boolean {
   return hash === verifyHash;
 }
 
-const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     CredentialsProvider({
-      name: "credentials",
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          throw new Error('Please enter an email and password');
         }
 
         await connectToDB();
 
         const user = await User.findOne({ email: credentials.email });
-
-        if (!user || !user?.password) {
-          throw new Error("Invalid credentials");
+        if (!user) {
+          throw new Error('No user found with this email');
         }
 
-        const isValidPassword = verifyPassword(credentials.password, user.password);
-
-        if (!isValidPassword) {
-          throw new Error("Invalid credentials");
+        const isValid = verifyPassword(credentials.password, user.password);
+        if (!isValid) {
+          throw new Error('Invalid password');
         }
 
         return {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
-          role: user.role,
-          image: user.image,
+          role: user.role
         };
-      },
+      }
     }),
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === 'google') {
+      if (account?.provider === "google") {
         try {
           await connectToDB();
-          
+
           const existingUser = await User.findOne({ email: user.email });
-          
           if (!existingUser) {
             await User.create({
               email: user.email,
               name: user.name,
               image: user.image,
-              role: 'user',
+              provider: "google"
             });
           }
-          
-          return true;
         } catch (error) {
-          console.error('Error in signIn callback:', error);
+          console.error("Error during Google sign in:", error);
           return false;
         }
       }
@@ -81,29 +74,22 @@ const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role || 'user';
       }
       return token;
     },
     async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id,
-          role: token.role,
-        },
-      };
-    },
+      if (session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    }
   },
   pages: {
     signIn: '/auth/signin',
     error: '/auth/error',
   },
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
-
-export { authOptions };
