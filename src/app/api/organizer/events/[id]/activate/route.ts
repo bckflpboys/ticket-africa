@@ -6,15 +6,11 @@ import Event from '@/models/Event';
 
 export async function PATCH(
   request: Request,
-  context: {
-    params: {
-      id: string;
-    }
-  }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Get and validate the ID parameter
-    const { id } = context.params;
+    const { id } = params;
     if (!id) {
       return NextResponse.json(
         { error: 'Event ID is required' },
