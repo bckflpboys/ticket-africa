@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { connectToDatabase } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
+import { NextResponse, NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { connectToDB } from '@/lib/mongoose';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import Event from '@/models/Event';
+import Order from '@/models/Order';
+import mongoose from 'mongoose';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,19 +15,17 @@ export async function POST(req: NextRequest) {
 
     const { eventId, tickets, coolerBox, total } = await req.json();
 
-    const { db } = await connectToDatabase();
+    await connectToDB();
 
     // Fetch event details
-    const event = await db.collection('events').findOne({
-      _id: new ObjectId(eventId)
-    });
+    const event = await Event.findById(eventId);
 
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
     // Validate ticket quantities
-    for (const [ticketId, quantity] of Object.entries(tickets)) {
+    for (const [ticketId, quantity] of Object.entries(tickets as { [key: string]: number })) {
       const ticketType = event.ticketTypes.find(
         (t: any) => t._id.toString() === ticketId
       );
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       }
 
       const availableQuantity = ticketType.quantity - (ticketType.quantitySold || 0);
-      if (quantity > availableQuantity) {
+      if (Number(quantity) > availableQuantity) {
         return NextResponse.json(
           { error: `Not enough ${ticketType.name} tickets available` },
           { status: 400 }
@@ -47,9 +47,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Create order in database
-    const order = await db.collection('orders').insertOne({
+    const order = await Order.create({
       userId: session.user.id,
-      eventId: new ObjectId(eventId),
+      eventId,
       tickets,
       coolerBox,
       total,
@@ -63,9 +63,9 @@ export async function POST(req: NextRequest) {
     let checkoutUrl = '';
 
     if (paymentProvider === 'stripe') {
-      checkoutUrl = `/api/payments/stripe/create-checkout-session?orderId=${order.insertedId}`;
+      checkoutUrl = `/api/payments/stripe/create-checkout-session?orderId=${order._id}`;
     } else if (paymentProvider === 'paystack') {
-      checkoutUrl = `/api/payments/paystack/initialize?orderId=${order.insertedId}`;
+      checkoutUrl = `/api/payments/paystack/initialize?orderId=${order._id}`;
     }
 
     return NextResponse.json({ checkoutUrl });
