@@ -3,6 +3,30 @@ import { connectToDB } from '@/lib/mongoose';
 import Order from '@/models/Order';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
+import { Types } from 'mongoose';
+
+interface Ticket {
+  ticketId: string;
+  ticketType: string;
+  quantity: number;
+  price: number;
+  isScanned: boolean;
+  scannedAt?: Date;
+  scannedBy?: string;
+}
+
+interface OrderDocument {
+  _id: Types.ObjectId;
+  userId: string;
+  eventId: Types.ObjectId;
+  tickets: Ticket[];
+  total: number;
+  paymentReference: string;
+  paymentStatus: string;
+  paymentProvider: string;
+  metadata: Record<string, any>;
+  save(): Promise<OrderDocument>;
+}
 
 export async function POST(req: Request) {
   try {
@@ -20,39 +44,47 @@ export async function POST(req: Request) {
 
     await connectToDB();
 
-    const order = await Order.findOne({ 'paymentReference': ticketId });
+    // Find order with the specific ticket ID
+    const order = await Order.findOne({ 'tickets.ticketId': ticketId }) as OrderDocument | null;
 
     if (!order) {
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
     }
 
-    if (order.tickets[0].isScanned) {
+    // Find the specific ticket in the order
+    const ticket = order.tickets.find(t => t.ticketId === ticketId);
+
+    if (!ticket) {
+      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
+    }
+
+    if (ticket.isScanned) {
       return NextResponse.json({ 
         error: 'Ticket already scanned',
-        scannedAt: order.tickets[0].scannedAt,
-        scannedBy: order.tickets[0].scannedBy
+        scannedAt: ticket.scannedAt,
+        scannedBy: ticket.scannedBy
       }, { status: 400 });
     }
 
     // Update ticket status
-    order.tickets[0].isScanned = true;
-    order.tickets[0].scannedAt = new Date();
-    order.tickets[0].scannedBy = session.user.email;
+    ticket.isScanned = true;
+    ticket.scannedAt = new Date();
+    ticket.scannedBy = session.user.email || '';
     await order.save();
 
     return NextResponse.json({ 
       success: true,
       message: 'Ticket successfully scanned',
       ticketDetails: {
-        eventId: order.eventId,
-        ticketType: order.tickets[0].ticketType,
-        scannedAt: order.tickets[0].scannedAt,
-        scannedBy: order.tickets[0].scannedBy
+        eventId: order.eventId.toString(),
+        ticketType: ticket.ticketType,
+        scannedAt: ticket.scannedAt,
+        scannedBy: ticket.scannedBy
       }
     });
 
   } catch (error) {
     console.error('Error scanning ticket:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to scan ticket' }, { status: 500 });
   }
 }

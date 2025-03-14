@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 const OrderSchema = new mongoose.Schema({
   userId: {
@@ -14,6 +15,10 @@ const OrderSchema = new mongoose.Schema({
     ticketType: String,
     quantity: Number,
     price: Number,
+    ticketId: {
+      type: String,
+      default: () => crypto.randomBytes(8).toString('hex'),
+    },
     isScanned: {
       type: Boolean,
       default: false
