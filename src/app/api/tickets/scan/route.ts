@@ -6,7 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { Types } from 'mongoose';
 
 interface Ticket {
-  ticketId: string;
+  _id: Types.ObjectId;
   ticketType: string;
   quantity: number;
   price: number;
@@ -42,27 +42,39 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Ticket ID is required' }, { status: 400 });
     }
 
+    // Parse the QR code content (format: orderId-paymentReference)
+    const [orderId, paymentReference] = ticketId.split('-');
+
+    if (!orderId || !paymentReference) {
+      return NextResponse.json({ error: 'Invalid ticket format' }, { status: 400 });
+    }
+
     await connectToDB();
 
-    // Find order with the specific ticket ID
-    const order = await Order.findOne({ 'tickets.ticketId': ticketId }) as OrderDocument | null;
+    // Find order using both orderId and paymentReference
+    const order = await Order.findOne({
+      _id: orderId,
+      paymentReference: paymentReference
+    }) as OrderDocument | null;
 
     if (!order) {
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
     }
 
-    // Find the specific ticket in the order
-    const ticket = order.tickets.find(t => t.ticketId === ticketId);
-
-    if (!ticket) {
-      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
+    // Check if payment is completed
+    if (order.paymentStatus !== 'completed') {
+      return NextResponse.json({ 
+        error: 'Payment not completed for this ticket',
+        paymentStatus: order.paymentStatus
+      }, { status: 400 });
     }
 
-    if (ticket.isScanned) {
+    // Find an unscanned ticket in the order
+    const ticket = order.tickets.find(t => !t.isScanned);
+
+    if (!ticket) {
       return NextResponse.json({ 
-        error: 'Ticket already scanned',
-        scannedAt: ticket.scannedAt,
-        scannedBy: ticket.scannedBy
+        error: 'All tickets in this order have been scanned',
       }, { status: 400 });
     }
 
