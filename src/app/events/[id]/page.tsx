@@ -106,7 +106,7 @@ interface TicketPrices {
 export default function EventDetails() {
   const params = useParams();
   const id = params.id as string;
-  const { addTicket, addCoolerBox } = useCart();
+  const { addTicket, addMultipleTickets, addCoolerBox } = useCart();
   const { showToast } = useToast();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
@@ -236,19 +236,20 @@ export default function EventDetails() {
       return;
     }
 
-    // Add tickets to cart
-    Object.entries(tickets).forEach(([type, quantity]) => {
-      if (quantity > 0) {
-        addTicket({
-          eventId: id,
-          eventName: event?.title || '',
-          ticketType: type,
-          quantity: quantity,
-          price: ticketPrices[type],
-          imageUrl: images[0]
-        });
-      }
-    });
+    // Prepare tickets to add
+    const ticketsToAdd = Object.entries(tickets)
+      .filter(([_, quantity]) => quantity > 0)
+      .map(([type, quantity]) => ({
+        eventId: id,
+        eventName: event?.title || '',
+        ticketType: type,
+        quantity,
+        price: ticketPrices[type],
+        imageUrl: images[0]
+      }));
+
+    // Add all tickets in a single update
+    addMultipleTickets(ticketsToAdd);
 
     // Add cooler box if selected
     if (coolerBoxPass) {

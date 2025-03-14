@@ -25,6 +25,7 @@ interface CartContextType {
   tickets: TicketItem[];
   coolerBoxes: CoolerBoxItem[];
   addTicket: (ticket: Omit<TicketItem, 'id'>) => void;
+  addMultipleTickets: (tickets: Array<Omit<TicketItem, 'id'>>) => void;
   addCoolerBox: (coolerBox: Omit<CoolerBoxItem, 'id'>) => void;
   removeTicket: (ticketId: string) => void;
   removeCoolerBox: (coolerBoxId: string) => void;
@@ -36,6 +37,7 @@ const CartContext = createContext<CartContextType>({
   tickets: [],
   coolerBoxes: [],
   addTicket: () => {},
+  addMultipleTickets: () => {},
   addCoolerBox: () => {},
   removeTicket: () => {},
   removeCoolerBox: () => {},
@@ -55,24 +57,48 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addTicket = (ticket: Omit<TicketItem, 'id'>) => {
     setTickets(prev => {
-      // Check if the same type of ticket for the same event already exists
-      const existingTicket = prev.find(t => 
+      const updatedTickets = [...prev];
+      const existingIndex = updatedTickets.findIndex(t => 
         t.eventId === ticket.eventId && 
         t.ticketType === ticket.ticketType
       );
 
-      if (existingTicket) {
-        // Update quantity of existing ticket
-        return prev.map(t => 
-          t.id === existingTicket.id 
-            ? { ...t, quantity: t.quantity + ticket.quantity }
-            : t
-        );
+      if (existingIndex !== -1) {
+        updatedTickets[existingIndex] = {
+          ...updatedTickets[existingIndex],
+          quantity: updatedTickets[existingIndex].quantity + ticket.quantity
+        };
+      } else {
+        const id = `${ticket.eventId}-${ticket.ticketType}-${Date.now()}`;
+        updatedTickets.push({ ...ticket, id });
       }
 
-      // If no existing ticket found, add new one
-      const id = `${ticket.eventId}-${ticket.ticketType}-${Date.now()}`;
-      return [...prev, { ...ticket, id }];
+      return updatedTickets;
+    });
+  };
+
+  const addMultipleTickets = (tickets: Array<Omit<TicketItem, 'id'>>) => {
+    setTickets(prev => {
+      const updatedTickets = [...prev];
+      
+      tickets.forEach(ticket => {
+        const existingIndex = updatedTickets.findIndex(t => 
+          t.eventId === ticket.eventId && 
+          t.ticketType === ticket.ticketType
+        );
+
+        if (existingIndex !== -1) {
+          updatedTickets[existingIndex] = {
+            ...updatedTickets[existingIndex],
+            quantity: updatedTickets[existingIndex].quantity + ticket.quantity
+          };
+        } else {
+          const id = `${ticket.eventId}-${ticket.ticketType}-${Date.now()}`;
+          updatedTickets.push({ ...ticket, id });
+        }
+      });
+
+      return updatedTickets;
     });
   };
 
@@ -138,6 +164,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         tickets,
         coolerBoxes,
         addTicket,
+        addMultipleTickets,
         addCoolerBox,
         removeTicket,
         removeCoolerBox,
