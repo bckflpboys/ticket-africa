@@ -13,7 +13,19 @@ const OrderSchema = new mongoose.Schema({
   tickets: [{
     ticketType: String,
     quantity: Number,
-    price: Number
+    price: Number,
+    isScanned: {
+      type: Boolean,
+      default: false
+    },
+    scannedAt: {
+      type: Date,
+      default: null
+    },
+    scannedBy: {
+      type: String,
+      default: null
+    }
   }],
   total: {
     type: Number,

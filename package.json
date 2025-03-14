@@ -15,6 +15,7 @@
     "daisyui": "^4.12.23",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.4.4",
+    "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.475.0",
     "mongoose": "^8.10.1",
