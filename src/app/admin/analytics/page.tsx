@@ -18,7 +18,6 @@ import {
   ChartOptions
 } from 'chart.js';
 import { UserSignupsChart } from '@/components/admin/UserSignupsChart';
-import EventLocationsMap from '@/components/admin/EventLocationsMap';
 
 ChartJS.register(
   CategoryScale,
@@ -327,11 +326,30 @@ export default function AnalyticsPage() {
         <div className="card bg-base-100 shadow-sm border-2 border-base-300">
           <div className="card-body">
             <h2 className="card-title mb-6">Event Locations</h2>
-            <div className="h-[400px] relative">
+            <div className="overflow-x-auto">
               {data.geographicData && data.geographicData.length > 0 ? (
-                <EventLocationsMap geographicData={data.geographicData} />
+                <table className="table table-zebra w-full">
+                  <thead>
+                    <tr>
+                      <th>Location</th>
+                      <th>Address</th>
+                      <th>Events</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.geographicData.flatMap(region => 
+                      region.locations.map((location, idx) => (
+                        <tr key={`${region.city}-${idx}`}>
+                          <td>{location.name}</td>
+                          <td>{location.address}</td>
+                          <td>{region.events}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               ) : (
-                <div className="flex items-center justify-center h-full bg-base-200 rounded-lg">
+                <div className="flex items-center justify-center h-32 bg-base-200 rounded-lg">
                   <p className="text-base-content/70">No location data available</p>
                 </div>
               )}
