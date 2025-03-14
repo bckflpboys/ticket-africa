@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     }).populate({
       path: 'eventId',
       model: Event,
-      select: 'name date venue'
+      select: 'title description date endTime location images'
     }).lean();
 
     console.log('Query with both ID types:', { 
@@ -48,9 +48,10 @@ export async function GET(req: NextRequest) {
       orderDate: order.createdAt,
       event: order.eventId ? {
         _id: order.eventId._id.toString(),
-        name: order.eventId.name,
+        name: order.eventId.title,
         date: order.eventId.date,
-        venue: order.eventId.venue,
+        venue: order.eventId.location ? JSON.parse(order.eventId.location).venue.name : '',
+        image: order.eventId.images?.[0] || null,
       } : null,
       tickets: order.tickets,
       total: order.total,

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }).populate({
       path: 'eventId',
       model: Event,
-      select: 'name date venue image description'
+      select: 'title description date endTime location images'
     });
 
     if (!order) {
@@ -34,10 +34,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       orderDate: order.createdAt,
       event: {
         _id: order.eventId._id,
-        name: order.eventId.name,
+        name: order.eventId.title,
         date: order.eventId.date,
-        venue: order.eventId.venue,
-        image: order.eventId.image,
+        venue: order.eventId.location ? JSON.parse(order.eventId.location).venue.name : '',
+        image: order.eventId.images?.[0] || null,
         description: order.eventId.description
       },
       tickets: order.tickets,
