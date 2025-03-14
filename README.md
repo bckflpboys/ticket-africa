@@ -1,104 +1,159 @@
 # Ticket Africa
 
-A modern and robust ticket booking platform designed for events across Africa. Built with Next.js 15+ and modern web technologies, this platform provides a seamless experience for event discovery, ticket booking, and event management.
+A modern and robust ticket booking platform designed for events across Africa. Built with Next.js 14+ and modern web technologies, this platform provides a seamless experience for event discovery, ticket booking, and event management.
 
-## Current Features
-
-### Event Discovery & Browsing
-- Browse events with detailed event pages
-- Advanced search functionality with filters for:
-  - Categories (Music, Technology, Business, etc.)
-  - Location (Countries and Cities across Africa)
-  - Date
-  - Price Range
-  - Tags
-- Featured events showcase on homepage
-- Event image galleries with smooth navigation
-- Event details including descriptions, schedules, and locations
-
-### Ticket Management
-- Multiple ticket types (Regular, VIP, VVIP)
-- Optional Cooler Box Pass for events
-- Shopping cart functionality with:
-  - Individual ticket type tracking
-  - Quantity management
-  - Price calculations
-  - Service fee (5%) calculation
-  - Cart persistence
-
-### User Interface
-- Responsive design for all screen sizes
-- Modern UI with DaisyUI components
-- Smooth animations and transitions
-- Intuitive navigation
-- Search bar with advanced filtering
-- Mobile-friendly navigation menu
-
-## Planned Features
-
-### Authentication & User Management
-- User registration and login
-- Social media authentication
-- User profiles and preferences
-- Booking history tracking
-- Saved events functionality
-
-### Payment Integration
-- Secure payment processing
-- Multiple payment methods
-- Transaction history
-- Refund management
+## Features
 
 ### Event Management
-- Event creation for organizers
-- Ticket inventory management
-- Event analytics and reporting
-- Real-time updates
+- Create, edit, and manage events
+- Multiple ticket types with customizable pricing
+- Event analytics and performance tracking
+- QR code-based ticket validation
+- Real-time ticket scanning and validation
+- Comprehensive event analytics dashboard
+
+### User Management
+- Role-based access control (Admin, Organizer, Staff, Scanner, User)
+- User registration and authentication with NextAuth
+- Social media authentication
+- Profile management with avatar support
+- Ticket purchase history
+- Saved events functionality
+
+### Payment Processing
+- Secure payment integration with Paystack
+- Multiple payment methods support
+- Transaction history tracking
+- Automated refund processing
+- Service fee calculations
+
+### Admin Dashboard
+- Comprehensive analytics dashboard
+- User management system
+- Revenue tracking and reporting
+- Event performance metrics
+- Geographic data visualization
+- Category performance analysis
+- Real-time sales monitoring
+
+### Event Discovery
+- Advanced search with multiple filters
+- Category-based browsing
+- Location-based event discovery
+- Price range filtering
+- Date-based event filtering
+- Featured events showcase
+
+### Ticket Management
+- Multiple ticket types support
+- QR code generation for tickets
+- Digital ticket delivery
+- Ticket transfer capability
+- Bulk ticket purchase
+- Ticket validation system
 
 ## Tech Stack
 
 ### Frontend
-- Next.js 15+
-- React 19
+- Next.js 14
+- React 18
 - TypeScript
-- Tailwind CSS with DaisyUI
-- Context API for state management
+- TailwindCSS
+- DaisyUI
+- Chart.js
+- Socket.IO Client
+- Framer Motion
+
+### Backend
+- Next.js API Routes
+- MongoDB with Mongoose
+- NextAuth.js
+- Socket.IO
+- JSON Web Tokens
+- Cloudinary for image storage
+
+### Payment Integration
+- Paystack Payment Gateway
 
 ### Development Tools
-- ESLint for code quality
-- Prettier for code formatting
-- Git for version control
+- TypeScript
+- ESLint
+- Prettier
+- PostCSS
+- Autoprefixer
 
 ## Project Structure
 ```
 src/
-├── app/                    # Next.js 13+ App Router pages
-│   ├── events/            # Event-related pages
-│   ├── blog/             # Blog section
-│   └── contact/          # Contact pages
+├── app/                    # Next.js App Router
+│   ├── admin/             # Admin dashboard and management
+│   ├── api/               # API routes
+│   ├── auth/              # Authentication pages
+│   ├── events/            # Event pages
+│   ├── profile/           # User profile pages
+│   ├── scanner/           # Ticket scanning interface
+│   └── tickets/           # Ticket management
 ├── components/            # React components
-│   ├── layout/           # Layout components (Navbar, Footer)
-│   ├── events/           # Event-related components
-│   ├── search/           # Search components
-│   ├── home/             # Homepage components
-│   └── blog/             # Blog components
-├── contexts/             # React Context providers
-│   └── cart.tsx         # Shopping cart context
+│   ├── admin/            # Admin components
+│   ├── auth/             # Authentication components
+│   ├── event/            # Event-related components
+│   ├── layout/           # Layout components
+│   ├── profile/          # Profile components
+│   └── ui/               # Reusable UI components
+├── contexts/             # React contexts
 ├── lib/                  # Utility functions
-└── models/              # Data models
+└── models/               # Mongoose models
 ```
+
+## Key Features
+
+### Admin Dashboard
+- Real-time analytics
+- User management
+- Event oversight
+- Revenue tracking
+- Geographic analysis
+- Performance metrics
+
+### Event Management
+- Event creation and editing
+- Ticket type configuration
+- Attendee management
+- Sales tracking
+- Analytics reporting
+
+### User Features
+- Profile customization
+- Ticket purchasing
+- Event browsing
+- Order history
+- Saved events
+- QR code tickets
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 16.8 or later
-- npm or yarn package manager
+- MongoDB database
+- Paystack account
+- Cloudinary account
+
+### Environment Variables
+```env
+MONGODB_URI=your_mongodb_connection_string
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=your_nextauth_url
+PAYSTACK_SECRET_KEY=your_paystack_secret
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
+```
 
 ### Installation
 
 1. Clone the repository
 ```bash
-git clone [repository-url]
+git clone https://github.com/yourusername/ticket-africa.git
 cd ticket-africa
 ```
 
@@ -107,25 +162,24 @@ cd ticket-africa
 npm install
 ```
 
-3. Run the development server
+3. Set up environment variables
+Create a .env.local file and add the required environment variables
+
+4. Run the development server
 ```bash
 npm run dev
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000)
-
-## Development Commands
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+5. Build for production
+```bash
+npm run build
+npm start
+```
 
 ## Contributing
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
