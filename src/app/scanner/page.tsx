@@ -35,6 +35,56 @@ export default function ScannerPage() {
       }, false);
 
       scanner.render(onScanSuccess, onScanError);
+
+      // Add custom styles to the scanner buttons
+      const style = document.createElement('style');
+      style.textContent = `
+        #reader__dashboard_section_csr button {
+          background-color: #4F46E5 !important;
+          color: white !important;
+          padding: 8px 16px !important;
+          border-radius: 8px !important;
+          border: none !important;
+          font-weight: 500 !important;
+          margin: 4px !important;
+          cursor: pointer !important;
+          transition: all 0.2s !important;
+        }
+        #reader__dashboard_section_csr button:hover {
+          background-color: #4338CA !important;
+        }
+        #reader__dashboard_section_csr button:active {
+          transform: scale(0.98) !important;
+        }
+        #reader__dashboard_section_csr {
+          margin-bottom: 16px !important;
+          text-align: center !important;
+        }
+        #reader__dashboard_section_swaplink {
+          color: #4F46E5 !important;
+          text-decoration: underline !important;
+          margin: 8px 0 !important;
+          display: inline-block !important;
+        }
+        #reader__scan_region {
+          border: 2px solid #E5E7EB !important;
+          border-radius: 8px !important;
+          overflow: hidden !important;
+        }
+        #reader__header_message {
+          color: #374151 !important;
+          font-size: 0.875rem !important;
+          margin: 8px 0 !important;
+        }
+        select {
+          padding: 6px 12px !important;
+          border-radius: 6px !important;
+          border: 1px solid #D1D5DB !important;
+          margin: 8px !important;
+          background-color: white !important;
+        }
+      `;
+      document.head.appendChild(style);
     }
 
     return () => {
@@ -74,54 +124,27 @@ export default function ScannerPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6 text-center">Scan Ticket</h1>
-            
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              {/* Scanner Section */}
-              <div className="p-4 sm:p-6">
-                <div className="aspect-square max-w-md mx-auto relative">
-                  <div id="reader" className="w-full h-full"></div>
-                </div>
-                <p className="text-sm text-gray-500 text-center mt-4">
-                  Position the QR code within the frame to scan
-                </p>
-              </div>
-
-              {/* Results Section */}
-              {scanResult && (
-                <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
-                  <h2 className="text-lg font-semibold mb-4 text-center">Ticket Details</h2>
-                  <div className="grid gap-4 max-w-sm mx-auto">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <p className="text-sm text-gray-500">Event ID</p>
-                      <p className="font-medium">{scanResult.eventId}</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <p className="text-sm text-gray-500">Ticket Type</p>
-                      <p className="font-medium">{scanResult.ticketType}</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <p className="text-sm text-gray-500">Scanned At</p>
-                      <p className="font-medium">{new Date(scanResult.scannedAt).toLocaleString()}</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <p className="text-sm text-gray-500">Scanned By</p>
-                      <p className="font-medium">{scanResult.scannedBy}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Instructions */}
-            <div className="mt-6 text-center text-sm text-gray-500">
-              <p>Make sure the QR code is well-lit and clearly visible</p>
-              <p>Hold your device steady while scanning</p>
-            </div>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6 text-center">Ticket Scanner</h1>
+        
+        <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+          <div className="mb-4 text-sm text-gray-600 text-center">
+            <p>Position the QR code within the frame to scan</p>
           </div>
+          
+          <div id="reader" className="mb-6"></div>
+          
+          {scanResult && (
+            <div className="border-t pt-4">
+              <h2 className="text-xl font-semibold mb-4">Scan Result</h2>
+              <div className="space-y-2">
+                <p><strong>Event ID:</strong> {scanResult.eventId}</p>
+                <p><strong>Ticket Type:</strong> {scanResult.ticketType}</p>
+                <p><strong>Scanned At:</strong> {new Date(scanResult.scannedAt).toLocaleString()}</p>
+                <p><strong>Scanned By:</strong> {scanResult.scannedBy}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
