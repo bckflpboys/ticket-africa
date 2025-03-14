@@ -176,10 +176,13 @@ export default function EventDetails() {
         prices[ticket.name] = ticket.price;
       });
       
-      setTickets(initialCounts);
-      setTicketPrices(prices);
+      // Only set tickets if they're empty (after cart reset)
+      if (Object.keys(tickets).length === 0) {
+        setTickets(initialCounts);
+        setTicketPrices(prices);
+      }
     }
-  }, [event]);
+  }, [event, tickets]);
 
   const images = event?.images || [
     "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop",
