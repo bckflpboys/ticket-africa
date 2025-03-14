@@ -4,7 +4,7 @@ import { connectToDB } from '@/lib/mongoose';
 import User from '@/models/User';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -15,11 +15,39 @@ export async function GET() {
       );
     }
 
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
+    const role = searchParams.get('role') || '';
+
     await connectToDB();
     
-    const users = await User.find({})
-      .select('name email phone image createdAt role tickets')
+    let query = User.find({});
+
+    // Apply search filter
+    if (search) {
+      query = query.or([
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ]);
+    }
+
+    // Apply role filter
+    if (role && role !== 'all') {
+      query = query.where('role').equals(role);
+    }
+
+    // Get total count for pagination
+    const total = await User.countDocuments(query);
+
+    // Apply pagination
+    const users = await query
+      .select('name email phone image createdAt role tickets lastLogin')
       .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
       .lean();
 
     // Calculate tickets purchased for each user
@@ -28,7 +56,15 @@ export async function GET() {
       ticketsPurchased: user.tickets?.length || 0
     }));
 
-    return NextResponse.json(usersWithStats);
+    return NextResponse.json({
+      users: usersWithStats,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(

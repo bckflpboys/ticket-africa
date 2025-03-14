@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiSearch, FiMail, FiPhone, FiFilter, FiDownload, FiRefreshCw } from 'react-icons/fi';
+import { FiSearch, FiMail, FiPhone, FiFilter, FiDownload, FiRefreshCw, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { useToast } from '@/contexts/toast';
 
 interface User {
@@ -21,20 +21,33 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<User['role'] | 'all'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [limit] = useState(10);
   const { showToast } = useToast();
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [currentPage, searchTerm, roleFilter]);
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users');
+      const queryParams = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+        ...(searchTerm && { search: searchTerm }),
+        ...(roleFilter !== 'all' && { role: roleFilter })
+      });
+
+      const response = await fetch(`/api/admin/users?${queryParams}`);
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
       const data = await response.json();
-      setUsers(data);
+      setUsers(data.users);
+      setTotalPages(data.pagination.pages);
+      setTotalUsers(data.pagination.total);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -282,6 +295,51 @@ export default function UsersPage() {
         {/* Results Count */}
         <div className="text-sm text-base-content/70 mt-4 pt-4 border-t-2 border-base-300">
           {filteredUsers.length} {filteredUsers.length === 1 ? 'user' : 'users'} found
+        </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between mt-4 p-4 bg-base-100 rounded-lg border-2 border-base-300">
+        <div className="text-sm text-base-content/70">
+          Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} users
+        </div>
+        <div className="join">
+          <button 
+            className="join-item btn btn-sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            <FiChevronLeft />
+          </button>
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNum;
+            if (totalPages <= 5) {
+              pageNum = i + 1;
+            } else if (currentPage <= 3) {
+              pageNum = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              pageNum = totalPages - 4 + i;
+            } else {
+              pageNum = currentPage - 2 + i;
+            }
+            
+            return (
+              <button
+                key={pageNum}
+                className={`join-item btn btn-sm ${currentPage === pageNum ? 'btn-primary' : ''}`}
+                onClick={() => setCurrentPage(pageNum)}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+          <button 
+            className="join-item btn btn-sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >
+            <FiChevronRight />
+          </button>
         </div>
       </div>
 
