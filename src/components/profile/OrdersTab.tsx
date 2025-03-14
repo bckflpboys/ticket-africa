@@ -83,14 +83,20 @@ export default function OrdersTab() {
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Event Image */}
                   <div className="relative w-full md:w-48 h-48 bg-gray-200 rounded-lg">
-                    {order.event.image && (
+                    {order.event?.image ? (
                       <Image
                         src={order.event.image}
-                        alt={order.event.name}
+                        alt={order.event?.name || 'Event'}
                         fill
                         className="object-cover rounded-lg"
                         priority
                       />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
                     )}
                   </div>
 
@@ -98,10 +104,13 @@ export default function OrdersTab() {
                   <div className="flex-grow">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h2 className="text-2xl font-bold mb-2">{order.event.name}</h2>
-                        <p className="text-base-content/70 mb-4">
-                          {format(new Date(order.event.date), 'EEEE, MMMM d, yyyy')} at {order.event.venue}
+                        <h2 className="text-2xl font-bold mb-2">{order.event?.name || 'Event'}</h2>
+                        <p className="text-base-content/70 mb-2">
+                          {order.event?.date ? format(new Date(order.event.date), 'EEEE, MMMM d, yyyy') : 'Date not available'}
                         </p>
+                        {order.event?.venue && (
+                          <p className="text-base-content/70">{order.event.venue}</p>
+                        )}
                       </div>
                       <div className="badge badge-success">{order.paymentStatus}</div>
                     </div>
