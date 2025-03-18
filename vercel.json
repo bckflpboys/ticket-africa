@@ -7,7 +7,7 @@
   "crons": [
     {
       "path": "/api/admin/events/check-promotions",
-      "schedule": "*/15 * * * *",
+      "schedule": "0 */12 * * *",
       "headers": {
         "x-vercel-cron-secret": "@CRON_SECRET"
       }
