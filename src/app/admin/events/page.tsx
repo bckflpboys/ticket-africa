@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiFilter, FiCalendar, FiTag, FiDollarSign, FiUsers } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiFilter, FiCalendar, FiTag, FiDollarSign, FiUsers, FiStar, FiTrendingUp } from 'react-icons/fi';
 import { useToast } from '@/contexts/toast';
 
 interface Event {
@@ -19,7 +19,152 @@ interface Event {
   }>;
   images: string[];
   organizer: string;
+  isFeatured: boolean;
+  isBanner: boolean;
+  promotionEndDate?: string;
+  promotionStartDate?: string;
+  promotionHistory: Array<{
+    type: 'featured' | 'banner';
+    startDate: string;
+    endDate: string;
+  }>;
+  wasFeatured: boolean;
+  wasBanner: boolean;
+  lastFeaturedDate?: string;
+  lastBannerDate?: string;
+  totalFeaturedDuration: number; // in days
+  totalBannerDuration: number; // in days
+  revenue: number;
 }
+
+interface StatCard {
+  title: string;
+  value: string | number;
+  subtitle: string;
+  color: string;
+  icon: React.ElementType;
+}
+
+const PromotionModal = ({ event, onClose, onUpdate }: { event: Event; onClose: () => void; onUpdate: () => void }) => {
+  const [promotionType, setPromotionType] = useState<'featured' | 'banner' | ''>(
+    event.isFeatured ? 'featured' : event.isBanner ? 'banner' : ''
+  );
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16));
+  const [endDate, setEndDate] = useState(event.promotionEndDate || '');
+  const { showToast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!promotionType || !startDate || !endDate) {
+      showToast('Please fill in all fields', 'error');
+      return;
+    }
+
+    if (new Date(startDate) >= new Date(endDate)) {
+      showToast('End date must be after start date', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/events/${event._id}/promotion`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isFeatured: promotionType === 'featured',
+          isBanner: promotionType === 'banner',
+          promotionStartDate: startDate,
+          promotionEndDate: endDate,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update promotion');
+      }
+
+      showToast('Promotion updated successfully', 'success');
+      onClose();
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating promotion:', error);
+      showToast('Failed to update promotion', 'error');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-base-100 rounded-lg p-6 max-w-md w-full">
+        <h3 className="text-lg font-semibold mb-4">Set Promotion for {event.title}</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="form-control mb-4">
+            <label className="label">
+              <span className="label-text">Promotion Type</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
+              value={promotionType}
+              onChange={(e) => setPromotionType(e.target.value as 'featured' | 'banner' | '')}
+            >
+              <option value="">Select type</option>
+              <option value="featured">Featured Event</option>
+              <option value="banner">Banner Event</option>
+            </select>
+          </div>
+          
+          <div className="form-control mb-4">
+            <label className="label">
+              <span className="label-text">Start Date & Time</span>
+            </label>
+            <input
+              type="datetime-local"
+              className="input input-bordered w-full"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
+            />
+          </div>
+
+          <div className="form-control mb-6">
+            <label className="label">
+              <span className="label-text">End Date & Time</span>
+            </label>
+            <input
+              type="datetime-local"
+              className="input input-bordered w-full"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              min={startDate}
+            />
+            {startDate && endDate && new Date(startDate) < new Date(endDate) && (
+              <label className="label">
+                <span className="label-text-alt">
+                  Duration: {Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                </span>
+              </label>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -27,27 +172,31 @@ export default function EventsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
+  const [checkingPromotions, setCheckingPromotions] = useState(false);
   const { showToast } = useToast();
-
-  useEffect(() => {
-    fetchEvents();
-  }, []);
 
   const fetchEvents = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/admin/events');
       if (!response.ok) {
         throw new Error('Failed to fetch events');
       }
       const data = await response.json();
       setEvents(data);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching events:', error);
-      showToast('Failed to load events', 'error');
+      showToast('Failed to fetch events', 'error');
+    } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const handleDelete = async (eventId: string) => {
     if (!confirm('Are you sure you want to delete this event?')) {
@@ -105,6 +254,55 @@ export default function EventsPage() {
   const uniqueCategories = Array.from(new Set(events.map(event => event.category)));
   const stats = getEventStats();
 
+  const handlePromotionUpdate = async (eventId: string, promotionData: {
+    isFeatured?: boolean;
+    isBanner?: boolean;
+    promotionEndDate?: string;
+  }) => {
+    try {
+      const response = await fetch(`/api/admin/events/${eventId}/promotion`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(promotionData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update promotion status');
+      }
+
+      showToast('Promotion status updated successfully', 'success');
+      fetchEvents();
+      setShowPromotionModal(false);
+    } catch (error) {
+      console.error('Error updating promotion:', error);
+      showToast('Failed to update promotion status', 'error');
+    }
+  };
+
+  const handleCheckPromotions = async () => {
+    try {
+      setCheckingPromotions(true);
+      const response = await fetch('/api/admin/events/check-promotions', {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to check promotions');
+      }
+
+      const data = await response.json();
+      showToast(`Checked ${data.expiredCount} promotions`, 'success');
+      fetchEvents(); // Refresh the events list
+    } catch (error) {
+      console.error('Error checking promotions:', error);
+      showToast('Failed to check promotions', 'error');
+    } finally {
+      setCheckingPromotions(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -119,47 +317,49 @@ export default function EventsPage() {
       <div className="mb-8 pb-6 border-b-2 border-base-300">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-3xl font-bold">Event Management</h1>
-          <button className="btn btn-primary">
-            <FiPlus className="w-5 h-5 mr-2" />
-            Create Event
-          </button>
+          <div className="flex gap-2">
+            <button
+              className={`btn btn-secondary ${checkingPromotions ? 'loading' : ''}`}
+              onClick={handleCheckPromotions}
+              disabled={checkingPromotions}
+            >
+              {checkingPromotions ? 'Checking...' : 'Check Promotions'}
+            </button>
+            <button className="btn btn-primary">
+              <FiPlus className="w-5 h-5 mr-2" />
+              Create Event
+            </button>
+          </div>
         </div>
         <p className="text-base-content/70">Manage and monitor events, tickets, and sales</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {[
           {
             title: 'Total Events',
-            value: stats.totalEvents,
-            icon: FiCalendar,
-            color: 'bg-primary/10 text-primary border-primary/30',
-            subtitle: `${stats.activeEvents} active`
+            value: events.length,
+            subtitle: 'Active events',
+            color: 'border-primary text-primary',
+            icon: FiCalendar
           },
           {
-            title: 'Categories',
-            value: uniqueCategories.length,
-            icon: FiTag,
-            color: 'bg-secondary/10 text-secondary border-secondary/30',
-            subtitle: 'Unique categories'
+            title: 'Featured Events',
+            value: events.filter(e => e.isFeatured).length,
+            subtitle: 'Currently featured',
+            color: 'border-secondary text-secondary',
+            icon: FiStar
           },
           {
-            title: 'Tickets Sold',
-            value: stats.totalSold,
-            icon: FiUsers,
-            color: 'bg-accent/10 text-accent border-accent/30',
-            subtitle: `${((stats.totalSold / stats.totalTickets) * 100).toFixed(1)}% of total`
-          },
-          {
-            title: 'Revenue',
-            value: `$${stats.revenue.toLocaleString()}`,
-            icon: FiDollarSign,
-            color: 'bg-info/10 text-info border-info/30',
-            subtitle: 'Total earnings'
+            title: 'Banner Events',
+            value: events.filter(e => e.isBanner).length,
+            subtitle: 'Currently in banner',
+            color: 'border-accent text-accent',
+            icon: FiTrendingUp
           }
-        ].map((stat, index) => (
-          <div key={index} className={`card bg-base-100 shadow-sm border-2 ${stat.color.split(' ')[2]}`}>
+        ].map((stat: StatCard, index) => (
+          <div key={index} className={`card bg-base-100 shadow-sm border-2 ${stat.color}`}>
             <div className="card-body p-6">
               <div className="flex items-start justify-between">
                 <div>
@@ -288,6 +488,7 @@ export default function EventsPage() {
                 <th className="border-r-2 border-base-200">Date</th>
                 <th className="border-r-2 border-base-200">Category</th>
                 <th className="border-r-2 border-base-200">Status</th>
+                <th className="border-r-2 border-base-200">Promotion</th>
                 <th className="border-r-2 border-base-200">Tickets Sold</th>
                 <th>Actions</th>
               </tr>
@@ -295,7 +496,7 @@ export default function EventsPage() {
             <tbody>
               {filteredEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8">
+                  <td colSpan={7} className="text-center py-8">
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-lg font-semibold">No events found</span>
                       <span className="text-base-content/70">Try adjusting your search or filters</span>
@@ -342,6 +543,55 @@ export default function EventsPage() {
                     </td>
                     <td>
                       <div className="flex flex-col gap-1">
+                        {/* Current Status */}
+                        {event.isFeatured && (
+                          <div>
+                            <span className="badge badge-sm badge-primary">Featured</span>
+                            {event.promotionStartDate && event.promotionEndDate && (
+                              <div className="text-xs text-base-content/70 mt-1">
+                                From: {formatDate(event.promotionStartDate)}
+                                <br />
+                                Until: {formatDate(event.promotionEndDate)}
+                                <br />
+                                Duration: {Math.ceil((new Date(event.promotionEndDate).getTime() - new Date(event.promotionStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {event.isBanner && (
+                          <div className="mt-1">
+                            <span className="badge badge-sm badge-secondary">Banner</span>
+                            {event.promotionStartDate && event.promotionEndDate && (
+                              <div className="text-xs text-base-content/70 mt-1">
+                                From: {formatDate(event.promotionStartDate)}
+                                <br />
+                                Until: {formatDate(event.promotionEndDate)}
+                                <br />
+                                Duration: {Math.ceil((new Date(event.promotionEndDate).getTime() - new Date(event.promotionStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Previous Status */}
+                        {!event.isFeatured && event.wasFeatured && (
+                          <div className="text-xs text-base-content/70 mt-2">
+                            Was Featured ({Math.round(event.totalFeaturedDuration)} days total)
+                            <br />
+                            Last: {formatDate(event.lastFeaturedDate || '')}
+                          </div>
+                        )}
+                        {!event.isBanner && event.wasBanner && (
+                          <div className="text-xs text-base-content/70 mt-1">
+                            Was Banner ({Math.round(event.totalBannerDuration)} days total)
+                            <br />
+                            Last: {formatDate(event.lastBannerDate || '')}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex flex-col gap-1">
                         <div className="flex justify-between text-sm">
                           <span>{event.ticketsSold} / {event.totalTickets}</span>
                           <span className="text-base-content/70">
@@ -370,6 +620,15 @@ export default function EventsPage() {
                         >
                           <FiTrash2 className="w-4 h-4" />
                         </button>
+                        <button 
+                          className="btn btn-sm btn-primary"
+                          onClick={() => {
+                            setSelectedEvent(event);
+                            setShowPromotionModal(true);
+                          }}
+                        >
+                          Promote
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -379,6 +638,13 @@ export default function EventsPage() {
           </table>
         </div>
       </div>
+      {showPromotionModal && selectedEvent && (
+        <PromotionModal
+          event={selectedEvent}
+          onClose={() => setShowPromotionModal(false)}
+          onUpdate={fetchEvents}
+        />
+      )}
     </div>
   );
 }

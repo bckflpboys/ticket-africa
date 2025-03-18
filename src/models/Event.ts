@@ -221,6 +221,65 @@ const eventSchema = new mongoose.Schema({
       }
     }
   }],
+  isFeatured: {
+    type: Boolean,
+    default: false
+  },
+  isBanner: {
+    type: Boolean,
+    default: false
+  },
+  promotionStartDate: {
+    type: Date,
+    default: null
+  },
+  promotionEndDate: {
+    type: Date,
+    default: null
+  },
+  promotionHistory: [{
+    type: {
+      type: String,
+      enum: ['featured', 'banner'],
+      required: true
+    },
+    startDate: {
+      type: Date,
+      required: true
+    },
+    endDate: {
+      type: Date,
+      required: true
+    },
+    duration: {
+      type: Number,
+      required: true
+    }
+  }],
+  wasFeatured: {
+    type: Boolean,
+    default: false
+  },
+  wasBanner: {
+    type: Boolean,
+    default: false
+  },
+  lastFeaturedDate: {
+    type: Date,
+    default: null
+  },
+  lastBannerDate: {
+    type: Date,
+    default: null
+  },
+  totalFeaturedDuration: {
+    type: Number,
+    default: 0
+  },
+  totalBannerDuration: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now,

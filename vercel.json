@@ -1,0 +1,11 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/events/check-promotions",
+      "schedule": "*/15 * * * *",
+      "headers": {
+        "x-vercel-cron-secret": "@CRON_SECRET"
+      }
+    }
+  ]
+}
