@@ -13,6 +13,7 @@ import {
   FiMenu,
   FiX
 } from 'react-icons/fi';
+import Navbar from '@/components/layout/Navbar';
 
 const menuItems = [
   { name: 'Dashboard', icon: FiHome, path: '/admin' },
@@ -33,8 +34,11 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-base-200">
+      {/* Main Navbar */}
+      <Navbar />
+      
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform ${
+      <aside className={`fixed top-[64px] left-0 z-40 h-[calc(100vh-64px)] transition-transform ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } bg-base-100 border-r border-base-300 w-64`}>
         <div className="flex items-center justify-between p-4">
@@ -71,7 +75,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main Content */}
-      <div className={`${sidebarOpen ? 'lg:ml-64' : ''}`}>
+      <div className={`pt-[64px] ${sidebarOpen ? 'lg:ml-64' : ''}`}>
         {/* Top Navigation */}
         <header className="bg-base-100 border-b border-base-300">
           <div className="flex items-center justify-between px-4 py-3">
