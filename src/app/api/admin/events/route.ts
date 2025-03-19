@@ -25,7 +25,7 @@ export async function GET() {
 
     await connectToDB();
     
-    const events = await Event.find({})
+    const events = await Event.find({ isBanner: true })
       .sort({ date: -1 })
       .lean();
 
