@@ -21,8 +21,10 @@ interface Event {
   organizer: string;
   isFeatured: boolean;
   isBanner: boolean;
-  promotionEndDate?: string;
-  promotionStartDate?: string;
+  featuredStartDate?: string;
+  featuredEndDate?: string;
+  bannerStartDate?: string;
+  bannerEndDate?: string;
   promotionHistory: Array<{
     type: 'featured' | 'banner';
     startDate: string;
@@ -46,22 +48,34 @@ interface StatCard {
 }
 
 const PromotionModal = ({ event, onClose, onUpdate }: { event: Event; onClose: () => void; onUpdate: () => void }) => {
-  const [promotionType, setPromotionType] = useState<'featured' | 'banner' | ''>(
-    event.isFeatured ? 'featured' : event.isBanner ? 'banner' : ''
-  );
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16));
-  const [endDate, setEndDate] = useState(event.promotionEndDate || '');
+  const [isFeatured, setIsFeatured] = useState(event.isFeatured);
+  const [isBanner, setIsBanner] = useState(event.isBanner);
+  const [featuredStartDate, setFeaturedStartDate] = useState(event.featuredStartDate?.slice(0, 16) || new Date().toISOString().slice(0, 16));
+  const [featuredEndDate, setFeaturedEndDate] = useState(event.featuredEndDate?.slice(0, 16) || '');
+  const [bannerStartDate, setBannerStartDate] = useState(event.bannerStartDate?.slice(0, 16) || new Date().toISOString().slice(0, 16));
+  const [bannerEndDate, setBannerEndDate] = useState(event.bannerEndDate?.slice(0, 16) || '');
   const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!promotionType || !startDate || !endDate) {
-      showToast('Please fill in all fields', 'error');
+    
+    // Validate featured promotion if enabled
+    if (isFeatured && (!featuredStartDate || !featuredEndDate)) {
+      showToast('Please fill in featured promotion dates', 'error');
+      return;
+    }
+    if (isFeatured && new Date(featuredStartDate) >= new Date(featuredEndDate)) {
+      showToast('Featured end date must be after start date', 'error');
       return;
     }
 
-    if (new Date(startDate) >= new Date(endDate)) {
-      showToast('End date must be after start date', 'error');
+    // Validate banner promotion if enabled
+    if (isBanner && (!bannerStartDate || !bannerEndDate)) {
+      showToast('Please fill in banner promotion dates', 'error');
+      return;
+    }
+    if (isBanner && new Date(bannerStartDate) >= new Date(bannerEndDate)) {
+      showToast('Banner end date must be after start date', 'error');
       return;
     }
 
@@ -72,10 +86,12 @@ const PromotionModal = ({ event, onClose, onUpdate }: { event: Event; onClose: (
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          isFeatured: promotionType === 'featured',
-          isBanner: promotionType === 'banner',
-          promotionStartDate: startDate,
-          promotionEndDate: endDate,
+          isFeatured,
+          isBanner,
+          featuredStartDate: isFeatured ? featuredStartDate : null,
+          featuredEndDate: isFeatured ? featuredEndDate : null,
+          bannerStartDate: isBanner ? bannerStartDate : null,
+          bannerEndDate: isBanner ? bannerEndDate : null,
         }),
       });
 
@@ -97,51 +113,103 @@ const PromotionModal = ({ event, onClose, onUpdate }: { event: Event; onClose: (
       <div className="bg-base-100 rounded-lg p-6 max-w-md w-full">
         <h3 className="text-lg font-semibold mb-4">Set Promotion for {event.title}</h3>
         <form onSubmit={handleSubmit}>
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">Promotion Type</span>
+          {/* Featured Event Section */}
+          <div className="form-control mb-6 p-4 border border-base-300 rounded-lg">
+            <label className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                className="checkbox"
+                checked={isFeatured}
+                onChange={(e) => setIsFeatured(e.target.checked)}
+              />
+              <span className="font-medium">Featured Event</span>
             </label>
-            <select
-              className="select select-bordered w-full"
-              value={promotionType}
-              onChange={(e) => setPromotionType(e.target.value as 'featured' | 'banner' | '')}
-            >
-              <option value="">Select type</option>
-              <option value="featured">Featured Event</option>
-              <option value="banner">Banner Event</option>
-            </select>
-          </div>
-          
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">Start Date & Time</span>
-            </label>
-            <input
-              type="datetime-local"
-              className="input input-bordered w-full"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              min={new Date().toISOString().slice(0, 16)}
-            />
+            
+            {isFeatured && (
+              <div className="space-y-4 mt-2">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Featured Start Date & Time</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="input input-bordered w-full"
+                    value={featuredStartDate}
+                    onChange={(e) => setFeaturedStartDate(e.target.value)}
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Featured End Date & Time</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="input input-bordered w-full"
+                    value={featuredEndDate}
+                    onChange={(e) => setFeaturedEndDate(e.target.value)}
+                    min={featuredStartDate}
+                  />
+                  {featuredStartDate && featuredEndDate && new Date(featuredStartDate) < new Date(featuredEndDate) && (
+                    <label className="label">
+                      <span className="label-text-alt">
+                        Featured Duration: {Math.ceil((new Date(featuredEndDate).getTime() - new Date(featuredStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                      </span>
+                    </label>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="form-control mb-6">
-            <label className="label">
-              <span className="label-text">End Date & Time</span>
+          {/* Banner Event Section */}
+          <div className="form-control mb-6 p-4 border border-base-300 rounded-lg">
+            <label className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                className="checkbox"
+                checked={isBanner}
+                onChange={(e) => setIsBanner(e.target.checked)}
+              />
+              <span className="font-medium">Banner Event</span>
             </label>
-            <input
-              type="datetime-local"
-              className="input input-bordered w-full"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              min={startDate}
-            />
-            {startDate && endDate && new Date(startDate) < new Date(endDate) && (
-              <label className="label">
-                <span className="label-text-alt">
-                  Duration: {Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))} days
-                </span>
-              </label>
+            
+            {isBanner && (
+              <div className="space-y-4 mt-2">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Banner Start Date & Time</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="input input-bordered w-full"
+                    value={bannerStartDate}
+                    onChange={(e) => setBannerStartDate(e.target.value)}
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Banner End Date & Time</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="input input-bordered w-full"
+                    value={bannerEndDate}
+                    onChange={(e) => setBannerEndDate(e.target.value)}
+                    min={bannerStartDate}
+                  />
+                  {bannerStartDate && bannerEndDate && new Date(bannerStartDate) < new Date(bannerEndDate) && (
+                    <label className="label">
+                      <span className="label-text-alt">
+                        Banner Duration: {Math.ceil((new Date(bannerEndDate).getTime() - new Date(bannerStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                      </span>
+                    </label>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
@@ -257,7 +325,10 @@ export default function EventsPage() {
   const handlePromotionUpdate = async (eventId: string, promotionData: {
     isFeatured?: boolean;
     isBanner?: boolean;
-    promotionEndDate?: string;
+    featuredStartDate?: string;
+    featuredEndDate?: string;
+    bannerStartDate?: string;
+    bannerEndDate?: string;
   }) => {
     try {
       const response = await fetch(`/api/admin/events/${eventId}/promotion`, {
@@ -547,13 +618,13 @@ export default function EventsPage() {
                         {event.isFeatured && (
                           <div>
                             <span className="badge badge-sm badge-primary">Featured</span>
-                            {event.promotionStartDate && event.promotionEndDate && (
+                            {event.featuredStartDate && event.featuredEndDate && (
                               <div className="text-xs text-base-content/70 mt-1">
-                                From: {formatDate(event.promotionStartDate)}
+                                From: {formatDate(event.featuredStartDate)}
                                 <br />
-                                Until: {formatDate(event.promotionEndDate)}
+                                Until: {formatDate(event.featuredEndDate)}
                                 <br />
-                                Duration: {Math.ceil((new Date(event.promotionEndDate).getTime() - new Date(event.promotionStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                                Duration: {Math.ceil((new Date(event.featuredEndDate).getTime() - new Date(event.featuredStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
                               </div>
                             )}
                           </div>
@@ -561,13 +632,13 @@ export default function EventsPage() {
                         {event.isBanner && (
                           <div className="mt-1">
                             <span className="badge badge-sm badge-secondary">Banner</span>
-                            {event.promotionStartDate && event.promotionEndDate && (
+                            {event.bannerStartDate && event.bannerEndDate && (
                               <div className="text-xs text-base-content/70 mt-1">
-                                From: {formatDate(event.promotionStartDate)}
+                                From: {formatDate(event.bannerStartDate)}
                                 <br />
-                                Until: {formatDate(event.promotionEndDate)}
+                                Until: {formatDate(event.bannerEndDate)}
                                 <br />
-                                Duration: {Math.ceil((new Date(event.promotionEndDate).getTime() - new Date(event.promotionStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                                Duration: {Math.ceil((new Date(event.bannerEndDate).getTime() - new Date(event.bannerStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
                               </div>
                             )}
                           </div>

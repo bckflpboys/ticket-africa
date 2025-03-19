@@ -225,17 +225,74 @@ const eventSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  currentPromotion: {
+    type: {
+      type: String,
+      enum: ['featured', 'banner'],
+      default: null
+    },
+    startDate: {
+      type: Date,
+      default: null,
+      get: function(v: any) {
+        return v ? new Date(v) : null;
+      }
+    },
+    endDate: {
+      type: Date,
+      default: null,
+      get: function(v: any) {
+        return v ? new Date(v) : null;
+      }
+    },
+    duration: {
+      type: Number,
+      default: 0
+    }
+  },
   isBanner: {
     type: Boolean,
     default: false
   },
-  promotionStartDate: {
+  featuredStartDate: {
     type: Date,
-    default: null
+    default: null,
+    get: function(v: any) {
+      return v ? new Date(v) : null;
+    },
+    set: function(v: string | Date | null) {
+      return v ? new Date(v) : null;
+    }
   },
-  promotionEndDate: {
+  featuredEndDate: {
     type: Date,
-    default: null
+    default: null,
+    get: function(v: any) {
+      return v ? new Date(v) : null;
+    },
+    set: function(v: string | Date | null) {
+      return v ? new Date(v) : null;
+    }
+  },
+  bannerStartDate: {
+    type: Date,
+    default: null,
+    get: function(v: any) {
+      return v ? new Date(v) : null;
+    },
+    set: function(v: string | Date | null) {
+      return v ? new Date(v) : null;
+    }
+  },
+  bannerEndDate: {
+    type: Date,
+    default: null,
+    get: function(v: any) {
+      return v ? new Date(v) : null;
+    },
+    set: function(v: string | Date | null) {
+      return v ? new Date(v) : null;
+    }
   },
   promotionHistory: [{
     type: {
@@ -245,11 +302,23 @@ const eventSchema = new mongoose.Schema({
     },
     startDate: {
       type: Date,
-      required: true
+      required: true,
+      get: function(v: any) {
+        return v ? new Date(v) : null;
+      },
+      set: function(v: string | Date) {
+        return new Date(v);
+      }
     },
     endDate: {
       type: Date,
-      required: true
+      required: true,
+      get: function(v: any) {
+        return v ? new Date(v) : null;
+      },
+      set: function(v: string | Date) {
+        return new Date(v);
+      }
     },
     duration: {
       type: Number,
@@ -266,11 +335,23 @@ const eventSchema = new mongoose.Schema({
   },
   lastFeaturedDate: {
     type: Date,
-    default: null
+    default: null,
+    get: function(v: any) {
+      return v ? new Date(v) : null;
+    },
+    set: function(v: string | Date | null) {
+      return v ? new Date(v) : null;
+    }
   },
   lastBannerDate: {
     type: Date,
-    default: null
+    default: null,
+    get: function(v: any) {
+      return v ? new Date(v) : null;
+    },
+    set: function(v: string | Date | null) {
+      return v ? new Date(v) : null;
+    }
   },
   totalFeaturedDuration: {
     type: Number,
@@ -283,11 +364,21 @@ const eventSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+    get: function(v: any) {
+      return v ? new Date(v) : null;
+    }
   },
   updatedAt: {
     type: Date,
     default: Date.now,
+    get: function(v: any) {
+      return v ? new Date(v) : null;
+    }
   },
+}, {
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
 });
 
 export default mongoose.models.Event || mongoose.model('Event', eventSchema);
