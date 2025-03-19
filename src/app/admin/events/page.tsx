@@ -298,7 +298,7 @@ export default function EventsPage() {
 
   const getEventStats = () => {
     const totalEvents = events.length;
-    const activeEvents = events.filter(e => e.status === 'Active').length;
+    const activeEvents = events.filter(e => e.status === 'published').length;
     const totalTickets = events.reduce((sum, event) => sum + event.totalTickets, 0);
     const totalSold = events.reduce((sum, event) => sum + event.ticketsSold, 0);
     const revenue = events.reduce((sum, event) => {
@@ -494,10 +494,10 @@ export default function EventsPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
                 <option value="all">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Draft">Draft</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="completed">Completed</option>
               </select>
             </div>
           </div>
@@ -604,12 +604,12 @@ export default function EventsPage() {
                     </td>
                     <td>
                       <span className={`badge badge-sm ${
-                        event.status === 'Active' ? 'badge-success' :
-                        event.status === 'Draft' ? 'badge-warning' :
-                        event.status === 'Completed' ? 'badge-info' :
+                        event.status === 'published' ? 'badge-success' :
+                        event.status === 'draft' ? 'badge-warning' :
+                        event.status === 'completed' ? 'badge-info' :
                         'badge-error'
                       }`}>
-                        {event.status}
+                        {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                       </span>
                     </td>
                     <td>
