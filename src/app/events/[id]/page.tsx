@@ -336,8 +336,9 @@ export default function EventDetails() {
                   src={images[currentImage]}
                   alt="Event banner"
                   fill
-                  className="object-cover transition-all duration-300"
                   priority
+                  sizes="(max-width: 1024px) 100vw, 66.67vw"
+                  className="object-cover transition-all duration-300"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop";
