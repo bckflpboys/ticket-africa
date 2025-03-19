@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import EventCard from './EventCard';
+import EventCardSkeleton from './EventCardSkeleton';
 
 interface Event {
   _id: string;
@@ -17,6 +18,17 @@ interface Event {
 }
 
 const FeaturedEvents = ({ events }: { events: Event[] }) => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data fetching
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <section className="py-12">
       <div className="container mx-auto px-4">
@@ -25,11 +37,17 @@ const FeaturedEvents = ({ events }: { events: Event[] }) => {
           <p className="text-gray-600">Discover the most popular events happening now</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
-            <div key={event._id}>
-              <EventCard {...event} />
-            </div>
-          ))}
+          {loading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <div key={index}>
+                  <EventCardSkeleton />
+                </div>
+              ))
+            : events.map((event) => (
+                <div key={event._id}>
+                  <EventCard {...event} />
+                </div>
+              ))}
         </div>
       </div>
     </section>

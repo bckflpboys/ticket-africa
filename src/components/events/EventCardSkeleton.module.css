@@ -1,0 +1,22 @@
+.skeletonCard {
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonImage {
+  background-color: #e0e0e0;
+  height: 150px;
+  border-radius: 8px;
+}
+
+.skeletonText {
+  background-color: #e0e0e0;
+  height: 20px;
+  border-radius: 4px;
+  width: 80%;
+}
