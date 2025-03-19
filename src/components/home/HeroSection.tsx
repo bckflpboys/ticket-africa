@@ -69,8 +69,9 @@ const HeroSection = () => {
               src={event.images[0]}
               alt={event.title}
               fill
+              priority
+              sizes="100vw"
               className="object-cover"
-              priority={index === 0}
             />
           </div>
         ))}
