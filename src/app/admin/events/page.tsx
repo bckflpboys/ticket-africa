@@ -378,6 +378,66 @@ export default function EventsPage() {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'published':
+        return 'badge-success';
+      case 'draft':
+        return 'badge-warning';
+      case 'cancelled':
+        return 'badge-error';
+      case 'completed':
+        return 'badge-info';
+      default:
+        return 'badge-ghost';
+    }
+  };
+
+  const getPromotionDuration = (startDate: string, endDate: string) => {
+    if (!startDate || !endDate) return 0;
+    return Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getPromotionTimeLeft = (endDate: string) => {
+    if (!endDate) return 0;
+    return Math.ceil((new Date(endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getPromotionStatus = (event: Event) => {
+    const statuses = [];
+    if (event.isFeatured) {
+      const daysLeft = getPromotionTimeLeft(event.featuredEndDate || '');
+      statuses.push({
+        type: 'featured',
+        daysLeft,
+        badge: 'badge-primary',
+        text: `Featured (${daysLeft}d left)`
+      });
+    }
+    if (event.isBanner) {
+      const daysLeft = getPromotionTimeLeft(event.bannerEndDate || '');
+      statuses.push({
+        type: 'banner',
+        daysLeft,
+        badge: 'badge-secondary',
+        text: `Banner (${daysLeft}d left)`
+      });
+    }
+    return statuses;
+  };
+
+  const calculateRevenue = (event: Event) => {
+    if (event.revenue !== undefined) return event.revenue;
+    return event.ticketTypes.reduce((sum, type) => {
+      return sum + (type.price * Math.min(type.quantity, event.ticketsSold));
+    }, 0);
+  };
+
+  const formatRevenue = (event: Event) => {
+    if (!event.revenue) return '0';
+    return event.revenue.toLocaleString();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -559,20 +619,19 @@ export default function EventsPage() {
           <table className="table table-zebra w-full">
             <thead className="bg-base-200/50 border-b-2 border-base-300">
               <tr>
-                <th className="border-r-2 border-base-200">Event Name</th>
-                <th className="border-r-2 border-base-200">Date</th>
-                <th className="border-r-2 border-base-200">Category</th>
-                <th className="border-r-2 border-base-200">Status</th>
+                <th className="border-r-2 border-base-200">Event Details</th>
+                <th className="border-r-2 border-base-200">Category & Status</th>
                 <th className="border-r-2 border-base-200">Promotion</th>
-                <th className="border-r-2 border-base-200">Tickets Sold</th>
+                <th className="border-r-2 border-base-200">Tickets</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8">
+                  <td colSpan={5} className="text-center py-8">
                     <div className="flex flex-col items-center gap-2">
+                      <FiCalendar className="w-12 h-12 text-base-content/30" />
                       <span className="text-lg font-semibold">No events found</span>
                       <span className="text-base-content/70">Try adjusting your search or filters</span>
                     </div>
@@ -580,129 +639,129 @@ export default function EventsPage() {
                 </tr>
               ) : (
                 filteredEvents.map((event) => (
-                  <tr key={event._id}>
-                    <td>
+                  <tr key={event._id} className="hover:bg-base-200/50">
+                    <td className="min-w-[300px]">
                       <div className="flex items-center gap-3">
                         {event.images?.[0] ? (
                           <div className="avatar">
-                            <div className="w-12 h-12 rounded-lg ring ring-primary ring-offset-base-100 ring-offset-2">
-                              <img src={event.images[0]} alt={event.title} />
+                            <div className="w-16 h-16 rounded-lg ring-2 ring-primary ring-offset-base-100 ring-offset-2">
+                              <img src={event.images[0]} alt={event.title} className="object-cover" />
                             </div>
                           </div>
                         ) : (
                           <div className="avatar placeholder">
-                            <div className="w-12 h-12 rounded-lg bg-neutral-focus text-neutral-content">
-                              <span className="text-xl">{event.title.charAt(0)}</span>
+                            <div className="w-16 h-16 rounded-lg bg-primary text-primary-content ring-2 ring-primary ring-offset-base-100 ring-offset-2">
+                              <span className="text-2xl">{event.title.charAt(0)}</span>
                             </div>
                           </div>
                         )}
                         <div>
-                          <div className="font-bold">{event.title}</div>
-                          <div className="text-sm text-base-content/70">{event.organizer}</div>
+                          <div className="font-bold text-lg">{event.title}</div>
+                          <div className="text-sm opacity-70">{event.organizer}</div>
+                          <div className="text-sm opacity-70">{formatDate(event.date)}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="text-sm">{formatDate(event.date)}</td>
                     <td>
-                      <span className="badge badge-outline badge-sm">{event.category}</span>
+                      <div className="flex flex-col gap-2">
+                        <span className="badge badge-outline badge-sm">{event.category}</span>
+                        <span className={`badge badge-sm ${getStatusColor(event.status)}`}>
+                          {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                        </span>
+                      </div>
                     </td>
-                    <td>
-                      <span className={`badge badge-sm ${
-                        event.status === 'published' ? 'badge-success' :
-                        event.status === 'draft' ? 'badge-warning' :
-                        event.status === 'completed' ? 'badge-info' :
-                        'badge-error'
-                      }`}>
-                        {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="flex flex-col gap-1">
-                        {/* Current Status */}
-                        {event.isFeatured && (
-                          <div>
-                            <span className="badge badge-sm badge-primary">Featured</span>
-                            {event.featuredStartDate && event.featuredEndDate && (
-                              <div className="text-xs text-base-content/70 mt-1">
-                                From: {formatDate(event.featuredStartDate)}
-                                <br />
-                                Until: {formatDate(event.featuredEndDate)}
-                                <br />
-                                Duration: {Math.ceil((new Date(event.featuredEndDate).getTime() - new Date(event.featuredStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
-                              </div>
-                            )}
+                    <td className="min-w-[200px]">
+                      <div className="flex flex-col gap-2">
+                        {getPromotionStatus(event).map((status, index) => (
+                          <div key={index} className="flex flex-col gap-1">
+                            <span className={`badge badge-sm ${status.badge}`}>
+                              {status.text}
+                            </span>
+                            <div className="text-xs opacity-70">
+                              {status.type === 'featured' ? (
+                                <>
+                                  {event.featuredStartDate && event.featuredEndDate && (
+                                    <div className="flex flex-col">
+                                      <span>From: {formatDate(event.featuredStartDate)}</span>
+                                      <span>Until: {formatDate(event.featuredEndDate)}</span>
+                                      <span>Duration: {getPromotionDuration(event.featuredStartDate, event.featuredEndDate)}d</span>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  {event.bannerStartDate && event.bannerEndDate && (
+                                    <div className="flex flex-col">
+                                      <span>From: {formatDate(event.bannerStartDate)}</span>
+                                      <span>Until: {formatDate(event.bannerEndDate)}</span>
+                                      <span>Duration: {getPromotionDuration(event.bannerStartDate, event.bannerEndDate)}d</span>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </div>
-                        )}
-                        {event.isBanner && (
-                          <div className="mt-1">
-                            <span className="badge badge-sm badge-secondary">Banner</span>
-                            {event.bannerStartDate && event.bannerEndDate && (
-                              <div className="text-xs text-base-content/70 mt-1">
-                                From: {formatDate(event.bannerStartDate)}
-                                <br />
-                                Until: {formatDate(event.bannerEndDate)}
-                                <br />
-                                Duration: {Math.ceil((new Date(event.bannerEndDate).getTime() - new Date(event.bannerStartDate).getTime()) / (1000 * 60 * 60 * 24))} days
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Previous Status */}
+                        ))}
                         {!event.isFeatured && event.wasFeatured && (
-                          <div className="text-xs text-base-content/70 mt-2">
-                            Was Featured ({Math.round(event.totalFeaturedDuration)} days total)
+                          <div className="text-xs opacity-70 mt-1">
+                            Was Featured ({Math.round(event.totalFeaturedDuration)}d total)
                             <br />
                             Last: {formatDate(event.lastFeaturedDate || '')}
                           </div>
                         )}
                         {!event.isBanner && event.wasBanner && (
-                          <div className="text-xs text-base-content/70 mt-1">
-                            Was Banner ({Math.round(event.totalBannerDuration)} days total)
+                          <div className="text-xs opacity-70 mt-1">
+                            Was Banner ({Math.round(event.totalBannerDuration)}d total)
                             <br />
                             Last: {formatDate(event.lastBannerDate || '')}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td>
-                      <div className="flex flex-col gap-1">
+                    <td className="min-w-[150px]">
+                      <div className="flex flex-col gap-2">
                         <div className="flex justify-between text-sm">
                           <span>{event.ticketsSold} / {event.totalTickets}</span>
-                          <span className="text-base-content/70">
+                          <span className="opacity-70">
                             {((event.ticketsSold / event.totalTickets) * 100).toFixed(1)}%
                           </span>
                         </div>
-                        <div className="w-full bg-base-200 rounded-full h-2 border-2 border-base-300">
+                        <div className="w-full bg-base-200 rounded-full h-2.5 border border-base-300">
                           <div 
-                            className="h-2 rounded-full bg-primary"
-                            style={{ width: `${(event.ticketsSold / event.totalTickets) * 100}%` }}
+                            className="h-2.5 rounded-full bg-primary"
+                            style={{ 
+                              width: `${(event.ticketsSold / event.totalTickets) * 100}%`,
+                              transition: 'width 0.3s ease-in-out'
+                            }}
                           />
                         </div>
                       </div>
                     </td>
                     <td>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
                         <button 
-                          className="btn btn-sm btn-ghost btn-square"
-                          onClick={() => window.location.href = `/admin/events/${event._id}/edit`}
-                        >
-                          <FiEdit2 className="w-4 h-4" />
-                        </button>
-                        <button 
-                          className="btn btn-sm btn-ghost btn-square text-error"
-                          onClick={() => handleDelete(event._id)}
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                        <button 
-                          className="btn btn-sm btn-primary"
+                          className="btn btn-sm btn-primary w-full"
                           onClick={() => {
                             setSelectedEvent(event);
                             setShowPromotionModal(true);
                           }}
                         >
+                          <FiStar className="w-4 h-4 mr-2" />
                           Promote
+                        </button>
+                        <a
+                          href={`/admin/events/${event._id}/edit`}
+                          className="btn btn-sm btn-ghost w-full"
+                        >
+                          <FiEdit2 className="w-4 h-4 mr-2" />
+                          Edit
+                        </a>
+                        <button 
+                          className="btn btn-sm btn-ghost text-error w-full"
+                          onClick={() => handleDelete(event._id)}
+                        >
+                          <FiTrash2 className="w-4 h-4 mr-2" />
+                          Delete
                         </button>
                       </div>
                     </td>
