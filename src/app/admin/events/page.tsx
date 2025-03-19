@@ -50,9 +50,13 @@ interface StatCard {
 const PromotionModal = ({ event, onClose, onUpdate }: { event: Event; onClose: () => void; onUpdate: () => void }) => {
   const [isFeatured, setIsFeatured] = useState(event.isFeatured);
   const [isBanner, setIsBanner] = useState(event.isBanner);
-  const [featuredStartDate, setFeaturedStartDate] = useState(event.featuredStartDate?.slice(0, 16) || new Date().toISOString().slice(0, 16));
+  const [featuredStartDate, setFeaturedStartDate] = useState(
+    event.featuredStartDate ? event.featuredStartDate.slice(0, 16) : new Date().toISOString().slice(0, 16)
+  );
   const [featuredEndDate, setFeaturedEndDate] = useState(event.featuredEndDate?.slice(0, 16) || '');
-  const [bannerStartDate, setBannerStartDate] = useState(event.bannerStartDate?.slice(0, 16) || new Date().toISOString().slice(0, 16));
+  const [bannerStartDate, setBannerStartDate] = useState(
+    event.bannerStartDate ? event.bannerStartDate.slice(0, 16) : new Date().toISOString().slice(0, 16)
+  );
   const [bannerEndDate, setBannerEndDate] = useState(event.bannerEndDate?.slice(0, 16) || '');
   const { showToast } = useToast();
 

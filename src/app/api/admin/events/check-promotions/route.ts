@@ -41,66 +41,99 @@ async function handleRequest(request: NextRequest) {
     // Find all events with active promotions that have expired
     const expiredPromotions = await Event.find({
       $or: [
-        { isFeatured: true },
-        { isBanner: true }
-      ],
-      promotionEndDate: {
-        $lt: currentDate
-      }
+        { 
+          isFeatured: true,
+          featuredEndDate: { $lt: currentDate }
+        },
+        { 
+          isBanner: true,
+          bannerEndDate: { $lt: currentDate }
+        }
+      ]
     });
 
     // Update each expired promotion
     const updatePromises = expiredPromotions.map(async (event) => {
-      const updateFields: any = {
-        isFeatured: false,
-        isBanner: false,
-        promotionEndDate: null,
-        promotionStartDate: null
-      };
+      const updateFields: any = {};
 
-      // Calculate duration for featured events
-      if (event.isFeatured) {
-        const startDate = new Date(event.promotionStartDate || event.promotionHistory?.[event.promotionHistory.length - 1]?.startDate || currentDate);
-        const endDate = new Date();
+      // Check and update featured promotion
+      if (event.isFeatured && event.featuredEndDate && new Date(event.featuredEndDate) < new Date(currentDate)) {
+        const startDate = new Date(event.featuredStartDate || currentDate);
+        const endDate = new Date(event.featuredEndDate);
         const durationInDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
         
+        updateFields.isFeatured = false;
+        updateFields.featuredStartDate = null;
+        updateFields.featuredEndDate = null;
         updateFields.wasFeatured = true;
         updateFields.lastFeaturedDate = currentDate;
         updateFields.totalFeaturedDuration = (event.totalFeaturedDuration || 0) + durationInDays;
+
+        // Add to promotion history
+        updateFields.$push = {
+          promotionHistory: {
+            type: 'featured',
+            startDate: startDate,
+            endDate: endDate,
+            duration: durationInDays
+          }
+        };
       }
 
-      // Calculate duration for banner events
-      if (event.isBanner) {
-        const startDate = new Date(event.promotionStartDate || event.promotionHistory?.[event.promotionHistory.length - 1]?.startDate || currentDate);
-        const endDate = new Date();
+      // Check and update banner promotion
+      if (event.isBanner && event.bannerEndDate && new Date(event.bannerEndDate) < new Date(currentDate)) {
+        const startDate = new Date(event.bannerStartDate || currentDate);
+        const endDate = new Date(event.bannerEndDate);
         const durationInDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
         
+        updateFields.isBanner = false;
+        updateFields.bannerStartDate = null;
+        updateFields.bannerEndDate = null;
         updateFields.wasBanner = true;
         updateFields.lastBannerDate = currentDate;
         updateFields.totalBannerDuration = (event.totalBannerDuration || 0) + durationInDays;
+
+        // Add to promotion history
+        if (!updateFields.$push) {
+          updateFields.$push = { promotionHistory: [] };
+        }
+        updateFields.$push.promotionHistory.push({
+          type: 'banner',
+          startDate: startDate,
+          endDate: endDate,
+          duration: durationInDays
+        });
+      }
+
+      // Only update if there are changes
+      if (Object.keys(updateFields).length === 0) {
+        return event;
       }
 
       return Event.findByIdAndUpdate(
         event._id,
-        { $set: updateFields },
+        updateFields,
         { new: true }
       );
     });
 
     const updatedEvents = await Promise.all(updatePromises);
+    const actuallyUpdated = updatedEvents.filter(event => 
+      (!event.isFeatured && event.wasFeatured) || (!event.isBanner && event.wasBanner)
+    );
 
     // Log the results
-    console.log(`[${new Date().toISOString()}] Promotion check completed: ${expiredPromotions.length} promotions expired`);
+    console.log(`[${new Date().toISOString()}] Promotion check completed: ${actuallyUpdated.length} promotions expired`);
     
     return NextResponse.json({
       message: 'Promotion check completed',
-      expiredCount: expiredPromotions.length,
-      updatedEvents: updatedEvents.map(event => ({
+      expiredCount: actuallyUpdated.length,
+      updatedEvents: actuallyUpdated.map(event => ({
         id: event._id,
         title: event.title,
         previousStatus: {
-          featured: event.wasFeatured,
-          banner: event.wasBanner
+          wasFeatured: event.wasFeatured,
+          wasBanner: event.wasBanner
         }
       }))
     });
