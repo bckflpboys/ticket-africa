@@ -12,6 +12,7 @@ interface EventCardProps {
   imageUrl?: string;  // For backward compatibility with mock data
   price?: number;     // For backward compatibility with mock data
   category: string;
+  priority?: boolean;
   ticketTypes?: Array<{
     name: string;
     price: number;
@@ -30,6 +31,7 @@ const EventCard = ({
   imageUrl, // For mock data
   price,    // For mock data
   category, 
+  priority,
   ticketTypes 
 }: EventCardProps) => {
   // Get the lowest ticket price, fallback to price prop for mock data
@@ -74,9 +76,10 @@ const EventCard = ({
             src={imageSource || "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop"}
             alt={title}
             fill
+            priority={priority}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover"
-            loading="lazy"
+            loading={priority ? undefined : "lazy"}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop";

@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import SearchBar from '@/components/search/SearchBar';
 import EventCard from '@/components/events/EventCard';
+import EventCardSkeleton from '@/components/events/EventCardSkeleton';
 import type { SearchFilters } from '@/components/search/SearchBar';
 
 // Mock categories for demonstration
@@ -171,13 +172,15 @@ export default function EventsPage() {
         <section className="py-16">
           <div className="container mx-auto px-4">
             {loading ? (
-              <div className="flex justify-center items-center py-16">
-                <span className="loading loading-spinner loading-lg"></span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, index) => (
+                  <EventCardSkeleton key={index} />
+                ))}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredEvents.map((event) => (
-                  <EventCard key={event._id} {...event} />
+                {filteredEvents.map((event, index) => (
+                  <EventCard key={event._id} {...event} priority={index === 0} />
                 ))}
               </div>
             )}
