@@ -34,18 +34,18 @@ const FeaturedEvents = ({ events }: { events: Event[] }) => {
     <section className="py-12">
       <div className="container mx-auto px-4">
         <div className="mb-8">
-          <div className="flex justify-between items-center px-16">
+          <div className="flex justify-between items-center px-4 md:px-16">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Featured Events</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Featured Events</h2>
             </div>
             <Link 
               href="/events" 
-              className="inline-flex items-center px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center px-4 py-2 md:px-6 md:py-3 bg-primary text-white text-sm md:text-base font-semibold rounded-lg hover:bg-primary/90 transition-colors"
             >
               Go to Events
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 ml-2"
+                className="h-4 w-4 md:h-5 md:w-5 ml-2"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
