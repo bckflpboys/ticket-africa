@@ -31,8 +31,19 @@ const Navbar = () => {
           {session ? (
             <>
               <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
-                <div className="w-10 rounded-full">
-                  <img alt="User Avatar" src={session.user?.image || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=2080&auto=format&fit=crop"} />
+                <div className="w-8 rounded-full overflow-hidden bg-gray-200">
+                  {session.user?.image ? (
+                    <img alt="User Avatar" src={session.user.image} className="w-full h-full object-cover" />
+                  ) : (
+                    <svg
+                      className="w-full h-full text-gray-500"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path fillRule="evenodd" clipRule="evenodd" d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                    </svg>
+                  )}
                 </div>
               </div>
               <ul tabIndex={0} className="dropdown-content menu menu-sm z-[999] p-2 shadow bg-base-100 rounded-box w-52 mt-2 border border-base-300">
