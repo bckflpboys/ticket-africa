@@ -20,6 +20,7 @@ interface Event {
     quantity: number;
     quantitySold: number;
   }>;
+  isFeatured: boolean; // Add this property to the Event interface
 }
 
 export default function Home() {
@@ -29,11 +30,34 @@ export default function Home() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+        // Check if we have cached events and they're less than 5 minutes old
+        const cachedData = localStorage.getItem('eventsData');
+        const cachedTimestamp = localStorage.getItem('eventsTimestamp');
+        const now = new Date().getTime();
+        
+        if (cachedData && cachedTimestamp && (now - parseInt(cachedTimestamp) < 5 * 60 * 1000)) {
+          setEvents(JSON.parse(cachedData));
+          setLoading(false);
+          return;
+        }
+
+        // If no cache or cache is old, fetch new data
         const response = await fetch('/api/events');
         const data = await response.json();
+        
+        // Cache the new data
+        localStorage.setItem('eventsData', JSON.stringify(data));
+        localStorage.setItem('eventsTimestamp', now.toString());
+        
         setEvents(data);
       } catch (error) {
         console.error('Error fetching events:', error);
+        
+        // If fetch fails, try to use cached data regardless of age
+        const cachedData = localStorage.getItem('eventsData');
+        if (cachedData) {
+          setEvents(JSON.parse(cachedData));
+        }
       } finally {
         setLoading(false);
       }
@@ -52,7 +76,7 @@ export default function Home() {
             <span className="loading loading-spinner loading-lg"></span>
           </div>
         ) : (
-          <FeaturedEvents events={events} />
+          <FeaturedEvents events={events.filter(event => event.isFeatured)} />
         )}
         <BlogSection />
       </main>

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useCart } from '@/contexts/cart';
 import { useToast } from '@/contexts/toast';
+import EventDetailsSkeleton from '@/components/events/EventDetailsSkeleton';
 
 interface EventRestrictions {
   ageRestriction?: {
@@ -109,7 +110,7 @@ export default function EventDetails() {
   const { addTicket, addMultipleTickets, addCoolerBox } = useCart();
   const { showToast } = useToast();
   const [event, setEvent] = useState<Event | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [parsedLocation, setParsedLocation] = useState<EventLocation | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
@@ -120,7 +121,8 @@ export default function EventDetails() {
   const [stats, setStats] = useState<EventStats>({ totalViews: 0, uniqueVisitors: 0 });
 
   useEffect(() => {
-    const fetchEvent = async () => {
+    const fetchEventDetails = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch(`/api/events/${id}`);
         if (!response.ok) {
@@ -141,11 +143,11 @@ export default function EventDetails() {
         setError('Failed to load event details');
         console.error('Error fetching event:', err);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchEvent();
+    fetchEventDetails();
   }, [id]);
 
   useEffect(() => {
@@ -278,15 +280,11 @@ export default function EventDetails() {
     setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-base-100">
         <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <span className="loading loading-spinner loading-lg"></span>
-          </div>
-        </div>
+        <EventDetailsSkeleton />
         <Footer />
       </div>
     );
@@ -412,7 +410,7 @@ export default function EventDetails() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857L11.414 10l1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                   <span>{(stats?.uniqueVisitors || 0).toLocaleString()} unique visitors</span>
                 </div>
