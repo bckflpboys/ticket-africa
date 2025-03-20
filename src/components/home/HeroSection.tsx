@@ -10,13 +10,18 @@ interface Event {
   title: string;
   date: string;
   location: string;
-  price: number;
   images: string[];
   category: string;
-  tag: string;
   isBanner: boolean;
   description: string;
-  ticketTypes: { name: string; price: { $numberInt: string } }[];
+  ticketTypes: {
+    name: string;
+    price: number;
+    quantity: number;
+    quantitySold: number;
+    _id: string;
+    id: string;
+  }[];
 }
 
 const truncateDescription = (description: string, maxLength: number) => {
@@ -36,7 +41,13 @@ const HeroSection = () => {
       try {
         const response = await fetch('/api/events');
         const data = await response.json();
-        setEvents(data.filter((event: Event) => event.isBanner));
+        console.log('Event data:', data);
+        const filteredEvents = data.filter((event: Event) => event.isBanner);
+        console.log('Filtered events:', filteredEvents);
+        console.log('First event ticket types:', filteredEvents[0]?.ticketTypes);
+        console.log('First event ticket types detailed:', JSON.stringify(filteredEvents[0]?.ticketTypes, null, 2));
+        console.log('First ticket price:', filteredEvents[0]?.ticketTypes[0]?.price);
+        setEvents(filteredEvents);
       } catch (error) {
         console.error('Error fetching events:', error);
       }
@@ -100,7 +111,11 @@ const HeroSection = () => {
                   day: 'numeric'
                 }) : 'Date not available'}</p>
               <p>{events[currentSlide]?.location ? JSON.parse(events[currentSlide].location).venue.city : 'Location not available'}</p>
-              <p className="text-primary">R{events[currentSlide]?.ticketTypes[0]?.price?.$numberInt || '200'}</p>
+              <p className="text-primary">
+                {events[currentSlide]?.ticketTypes?.length > 0
+                  ? `From R${events[currentSlide].ticketTypes[0].price}`
+                  : 'Price not available'}
+              </p>
             </div>
             <p className="text-lg mt-4">
               {truncateDescription(events[currentSlide]?.description, 100)}
