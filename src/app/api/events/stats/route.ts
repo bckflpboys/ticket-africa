@@ -35,21 +35,35 @@ const EventStats = mongoose.models.EventStats || mongoose.model<EventStatsDocume
 export async function POST(req: Request) {
   try {
     const { eventId } = await req.json();
+    console.log('Stats API called for event:', eventId);
     await connectDB();
     
     // Get visitor info
     const session = await getServerSession(authOptions);
     const visitorId = session?.user?.email || 'anonymous';
     const sessionId = Math.random().toString(36).substring(7);
+    console.log('Visitor info:', { visitorId, sessionId });
 
     // Get or create initial stats document
     let stats = await EventStats.findOne({ eventId });
+    console.log('Existing stats:', stats);
+
     if (!stats) {
+      console.log('Creating new stats document');
       stats = await EventStats.create({
         eventId,
-        totalViews: 0,
-        uniqueVisitors: 0,
-        viewHistory: []
+        totalViews: 1,
+        uniqueVisitors: 1,
+        viewHistory: [{
+          timestamp: new Date(),
+          visitorId,
+          sessionId
+        }]
+      });
+      console.log('New stats created:', stats);
+      return NextResponse.json({
+        totalViews: stats.totalViews,
+        uniqueVisitors: stats.uniqueVisitors
       });
     }
 
@@ -57,9 +71,10 @@ export async function POST(req: Request) {
     const isNewVisitor = !stats.viewHistory.some(
       (view: ViewHistoryItem) => view.visitorId === visitorId
     );
+    console.log('Is new visitor:', isNewVisitor);
 
     // Update the document
-    await EventStats.updateOne(
+    const updatedStats = await EventStats.findOneAndUpdate(
       { eventId },
       {
         $inc: { 
@@ -73,10 +88,15 @@ export async function POST(req: Request) {
             sessionId
           }
         }
-      }
+      },
+      { new: true }
     );
+    console.log('Updated stats:', updatedStats);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      totalViews: updatedStats.totalViews,
+      uniqueVisitors: updatedStats.uniqueVisitors
+    });
   } catch (error) {
     console.error('Error updating event stats:', error);
     return NextResponse.json({ error: 'Failed to update event stats' }, { status: 500 });
@@ -93,10 +113,12 @@ export async function GET(req: Request) {
     }
 
     await connectDB();
+    console.log('Fetching stats for event:', eventId);
     const stats = await EventStats.findOne(
       { eventId },
       { totalViews: 1, uniqueVisitors: 1, _id: 0 }
     );
+    console.log('Fetched stats:', stats);
     
     return NextResponse.json(stats || { totalViews: 0, uniqueVisitors: 0 });
   } catch (error) {

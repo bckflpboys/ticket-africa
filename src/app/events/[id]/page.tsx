@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCart } from '@/contexts/cart';
 import { useToast } from '@/contexts/toast';
 import EventDetailsSkeleton from '@/components/events/EventDetailsSkeleton';
@@ -120,37 +120,67 @@ export default function EventDetails() {
   const [ticketPrices, setTicketPrices] = useState<TicketPrices>({});
   const [coolerBoxPass, setCoolerBoxPass] = useState(false);
   const [stats, setStats] = useState<EventStats>({ totalViews: 0, uniqueVisitors: 0 });
+  const hasUpdatedStatsRef = useRef(false);
 
   useEffect(() => {
+    let isSubscribed = true;
+
     const fetchEvent = async () => {
       try {
         if (!eventId) return;
         
+        console.log('Fetching event details for:', eventId);
         const response = await fetch(`/api/events/${eventId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch event');
         }
         const data = await response.json();
-        setEvent(data);
+        if (isSubscribed) {
+          setEvent(data);
+        }
 
-        // Update view count
-        await fetch(`/api/events/${eventId}/views`, { method: 'POST' });
-        
-        // Fetch stats
-        const statsResponse = await fetch(`/api/events/${eventId}/stats`);
-        if (statsResponse.ok) {
-          const statsData = await statsResponse.json();
-          setStats(statsData);
+        // Update view count and get stats in a single request
+        if (!hasUpdatedStatsRef.current) {
+          console.log('Updating view count for:', eventId);
+          const statsResponse = await fetch(`/api/events/stats`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ eventId })
+          });
+          
+          if (statsResponse.ok && isSubscribed) {
+            const statsData = await statsResponse.json();
+            console.log('Received stats:', statsData);
+            if (statsData.error) {
+              console.error('Stats error:', statsData.error);
+            } else {
+              setStats(statsData);
+              hasUpdatedStatsRef.current = true;
+            }
+          }
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('Error loading event details', 'error');
+        if (isSubscribed) {
+          showToast('Error loading event details', 'error');
+        }
       } finally {
-        setIsLoading(false);
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
       }
     };
 
+    console.log('useEffect running for eventId:', eventId);
+    hasUpdatedStatsRef.current = false;
     fetchEvent();
+
+    return () => {
+      console.log('Cleanup running for eventId:', eventId);
+      isSubscribed = false;
+    };
   }, [eventId, showToast]);
 
   useEffect(() => {
@@ -416,7 +446,7 @@ export default function EventDetails() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857L11.414 10l1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                   <span>{(stats?.uniqueVisitors || 0).toLocaleString()} unique visitors</span>
                 </div>
@@ -550,7 +580,7 @@ export default function EventDetails() {
                           {event.restrictions?.coolerBox?.allowed && (
                             <li className="flex items-start gap-2">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 text-warning" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                               </svg>
                               <div>
                                 <span className="font-medium">Cooler Box Pass Required</span>
