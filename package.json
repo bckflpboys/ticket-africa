@@ -16,6 +16,7 @@
     "clsx": "^2.1.1",
     "daisyui": "^4.12.23",
     "date-fns": "^4.1.0",
+    "ekilirelay": "^1.0.4",
     "framer-motion": "^12.4.4",
     "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.2",

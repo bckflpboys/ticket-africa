@@ -28,11 +28,51 @@ export default function ContactPage() {
   });
 
   const [activeTab, setActiveTab] = useState('message'); // 'message' or 'faq'
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: 'success' | 'error' | null;
+    message: string | null;
+  }>({ type: null, message: null });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add form submission logic here
-    console.log('Form submitted:', formData);
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: null });
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus({
+          type: 'success',
+          message: 'Thank you for your message. We will get back to you soon!'
+        });
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        throw new Error(data.error || 'Something went wrong');
+      }
+    } catch (error: any) {
+      setSubmitStatus({
+        type: 'error',
+        message: error.message || 'Failed to send message. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -159,6 +199,13 @@ export default function ContactPage() {
                   <div className="card-body">
                     <h2 className="text-2xl font-bold mb-6">Send us a Message</h2>
                     <form onSubmit={handleSubmit} className="space-y-6">
+                      {submitStatus.message && (
+                        <div className={`alert ${submitStatus.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+                          <div>
+                            <span>{submitStatus.message}</span>
+                          </div>
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="form-control">
                           <label className="label">
@@ -220,8 +267,19 @@ export default function ContactPage() {
                         />
                       </div>
 
-                      <button type="submit" className="btn btn-primary w-full">
-                        Send Message
+                      <button 
+                        type="submit" 
+                        className="btn btn-primary w-full" 
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="loading loading-spinner"></span>
+                            Sending...
+                          </>
+                        ) : (
+                          'Send Message'
+                        )}
                       </button>
                     </form>
                   </div>
