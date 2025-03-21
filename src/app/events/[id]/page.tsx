@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -106,7 +106,8 @@ interface TicketPrices {
 
 export default function EventDetails() {
   const params = useParams();
-  const id = params.id as string;
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get('id');
   const { addTicket, addMultipleTickets, addCoolerBox } = useCart();
   const { showToast } = useToast();
   const [event, setEvent] = useState<Event | null>(null);
@@ -121,34 +122,36 @@ export default function EventDetails() {
   const [stats, setStats] = useState<EventStats>({ totalViews: 0, uniqueVisitors: 0 });
 
   useEffect(() => {
-    const fetchEventDetails = async () => {
-      setIsLoading(true);
+    const fetchEvent = async () => {
       try {
-        const response = await fetch(`/api/events/${id}`);
+        if (!eventId) return;
+        
+        const response = await fetch(`/api/events/${eventId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch event');
         }
         const data = await response.json();
         setEvent(data);
-        // Parse the location JSON string
-        if (data.location) {
-          try {
-            const locationData = JSON.parse(data.location);
-            setParsedLocation(locationData);
-          } catch (e) {
-            console.error('Error parsing location data:', e);
-          }
+
+        // Update view count
+        await fetch(`/api/events/${eventId}/views`, { method: 'POST' });
+        
+        // Fetch stats
+        const statsResponse = await fetch(`/api/events/${eventId}/stats`);
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          setStats(statsData);
         }
-      } catch (err) {
-        setError('Failed to load event details');
-        console.error('Error fetching event:', err);
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('Error loading event details', 'error');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchEventDetails();
-  }, [id]);
+    fetchEvent();
+  }, [eventId, showToast]);
 
   useEffect(() => {
     if (params.id) {
@@ -185,6 +188,17 @@ export default function EventDetails() {
       }
     }
   }, [event, tickets]);
+
+  useEffect(() => {
+    if (event?.location) {
+      try {
+        const locationData = JSON.parse(event.location);
+        setParsedLocation(locationData);
+      } catch (e) {
+        console.error('Error parsing location data:', e);
+      }
+    }
+  }, [event]);
 
   const images = event?.images || [
     "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=2070&auto=format&fit=crop",
@@ -232,44 +246,36 @@ export default function EventDetails() {
   };
 
   const handleAddToCart = () => {
-    // Check if at least one ticket is selected
-    const hasTickets = Object.values(tickets).some(quantity => quantity > 0);
-    
-    if (!hasTickets && coolerBoxPass) {
-      showToast('You cannot add a Cooler Box Pass without selecting at least one ticket.', 'error');
-      setCoolerBoxPass(false);
-      return;
-    }
+    if (!event) return;
 
-    // Prepare tickets to add
     const ticketsToAdd = Object.entries(tickets)
       .filter(([_, quantity]) => quantity > 0)
       .map(([type, quantity]) => ({
-        eventId: id,
-        eventName: event?.title || '',
+        eventId: eventId!,
+        eventName: event.title,
         ticketType: type,
         quantity,
-        price: ticketPrices[type],
-        imageUrl: images[0]
+        price: event.ticketTypes.find(t => t.name === type)?.price || 0,
+        imageUrl: event.images[0]
       }));
 
-    // Add all tickets in a single update
+    if (ticketsToAdd.length === 0) {
+      showToast('Please select at least one ticket', 'error');
+      return;
+    }
+
     addMultipleTickets(ticketsToAdd);
 
     // Add cooler box if selected
     if (coolerBoxPass) {
       addCoolerBox({
-        eventId: id,
-        eventName: event?.title || '',
-        price: 100
+        eventId: eventId!,
+        eventName: event.title,
+        price: event.coolerBoxLiters || 0
       });
     }
-    
-    // Reset tickets and cooler box after adding to cart
-    setTickets({});
-    setCoolerBoxPass(false);
-    
-    showToast('Added to cart successfully!', 'success');
+
+    showToast('Tickets added to cart', 'success');
   };
 
   const nextImage = () => {

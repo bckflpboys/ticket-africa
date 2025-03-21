@@ -67,8 +67,14 @@ const EventCard = ({
   const eventId = _id || id;
   const imageSource = images?.[0] || imageUrl;
 
+  // Create SEO-friendly URL slug
+  const urlSlug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
   return (
-    <Link href={`/events/${eventId}`} className="block h-full">
+    <Link href={`/events/${urlSlug}?id=${eventId}`} className="block h-full">
       <div className="relative overflow-hidden rounded-xl bg-white border-2 border-gray-300 hover:border-primary/70 shadow-sm hover:shadow-md transition-all h-full flex flex-col">
         {/* Image Container */}
         <div className="relative h-48 overflow-hidden rounded-t-xl flex-shrink-0">

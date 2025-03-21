@@ -98,11 +98,18 @@ const HeroSection = () => {
 
           {/* Current Event Details */}
           <div className="mb-12 transform transition-all duration-500">
-            <Link href={`/events/${events[currentSlide]?._id.toString()}`}>
-              <h2 className="text-3xl font-bold mb-4 hover:text-primary transition-colors">
-                {events[currentSlide]?.title}
-              </h2>
-            </Link>
+            {events[currentSlide] && (
+              <Link 
+                href={`/events/${events[currentSlide].title
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, '-')
+                  .replace(/(^-|-$)/g, '')}?id=${events[currentSlide]._id}`}
+              >
+                <h2 className="text-3xl font-bold mb-4 hover:text-primary transition-colors">
+                  {events[currentSlide].title}
+                </h2>
+              </Link>
+            )}
             <div className="flex items-center justify-center gap-6 text-lg font-bold">
               <p>{events[currentSlide]?.date ? new Date(events[currentSlide].date).toLocaleDateString('en-US', {
                   weekday: 'long',
